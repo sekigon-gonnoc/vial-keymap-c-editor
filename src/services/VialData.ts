@@ -10,7 +10,6 @@ export type CustomKeycode = {
 
 export class VialData implements IVialData {
   private _keymap: QmkKeymap;
-  private layerCount: number;
   private qmkKeycodes: { [key: string]: QmkKeycode } = {};
   private keycodeConverter: KeycodeConverter;
 
@@ -18,12 +17,14 @@ export class VialData implements IVialData {
     return this._keymap;
   }
 
-  constructor(keymap: QmkKeymap, layerCount: number) {
+  constructor(keymap: QmkKeymap) {
     this._keymap = keymap;
-    this.layerCount = layerCount;
   }
   async initKeycodeTable(customKeycodes?: CustomKeycode[]): Promise<void> {
-    this.keycodeConverter = await KeycodeConverter.Create(this.layerCount, customKeycodes);
+    this.keycodeConverter = await KeycodeConverter.Create(
+      this.keymap.dynamicLayerCount,
+      customKeycodes
+    );
     for (let k = 0; k < 0xffff; k++) {
       const key = this.keycodeConverter.convertIntToKeycode(k);
       this.qmkKeycodes[key.key] = key;
@@ -55,7 +56,7 @@ export class VialData implements IVialData {
   }
 
   async GetLayerCount(): Promise<number> {
-    return this.layerCount;
+    return this.keymap.dynamicLayerCount;
   }
 
   async GetLayer(

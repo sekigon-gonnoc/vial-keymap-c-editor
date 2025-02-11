@@ -17,12 +17,11 @@ function App() {
         onloaded={async (vialJson, keyboardJson, keymapC, configH) => {
           setVialJson(vialJson);
           setKeyboardJson(keyboardJson);
-          const newKeymapC = parseKeymapC(keymapC, keyboardJson);
+          const newKeymapC = parseKeymapC(keymapC, keyboardJson, configH);
           setKeymapC(newKeymapC);
           setConfigH(configH);
           const newVialData = new VialData(
             newKeymapC,
-            newKeymapC.layers.length
           );
           await newVialData.initKeycodeTable(vialJson.customKeycodes);
           setVialData(newVialData);
@@ -42,11 +41,11 @@ function App() {
             keymap={vialJson}
             via={vialData}
             dynamicEntryCount={{
-              layer: keyboardJson.dynamic_keymap?.layer_count ?? 4,
-              macro: 0,
-              tapdance: 0,
-              combo: 0,
-              override: 0,
+              layer: vialData.keymap.dynamicLayerCount,
+              macro: vialData.keymap.dynamicMacroCount,
+              tapdance: vialData.keymap.dynamicTapDanceCount,
+              combo: vialData.keymap.dynamicComboCount,
+              override: vialData.keymap.dynamicOverrideCount,
             }}
           />
         </>

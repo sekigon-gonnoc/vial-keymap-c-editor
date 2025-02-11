@@ -20,6 +20,11 @@ export interface QmkKeymap {
     keymap: string;
     layout: string;
     layers: KeymapLayer[];
+    dynamicLayerCount: number;
+    dynamicMacroCount: number;
+    dynamicTapDanceCount: number;
+    dynamicComboCount: number;
+    dynamicOverrideCount: number;
     userIncludes?: string;  // ユーザー定義インクルード部分
     userCode?: string;      // ユーザー定義コード部分
 }
@@ -30,7 +35,8 @@ export function parseKeymapC(
   keyboardJson: {
     layouts: { [key: string]: { layout: { matrix: number[] }[] } };
     dynamic_keymap?: { layer_count?: number };
-  }
+  },
+  configH: string
 ): QmkKeymap {
   // キーマップ
   const layers: KeymapLayer[] = [];
@@ -42,7 +48,16 @@ export function parseKeymapC(
   // keyboard.jsonのレイヤ定義
   const defaultLayoutName = Object.keys(keyboardJson.layouts)[0];
   const defaultLayout = keyboardJson.layouts[defaultLayoutName]?.layout;
-  const targetLayerCount = keyboardJson.dynamic_keymap?.layer_count ?? 4;
+  const dynamicLayerCount = keyboardJson.dynamic_keymap?.layer_count ?? 4;
+
+  // 各種設定値を取得
+  const dynamicComboCount = getConfigValue(configH, "VIAL_COMBO_ENTRIES") ?? 0;
+  const dynamicMacroCount = 32; // 常に32
+  const dynamicTapDanceCount =
+    getConfigValue(configH, "VIAL_TAP_DANCE_ENTRIES") ?? 0;
+  const dynamicOverrideCount =
+    getConfigValue(configH, "VIAL_KEY_OVERRIDE_ENTRIES") ?? 0;
+
 
   if (!defaultLayout) {
     throw new Error("No layout information found in keyboard.json");
@@ -81,7 +96,7 @@ export function parseKeymapC(
 
   // キーマップが見つかっていなかったらデフォルト値を生成
   if (!keymapsMatch) {
-    for (let i = 0; i < targetLayerCount; i++) {
+    for (let i = 0; i < dynamicLayerCount; i++) {
       layers.push({
         layout: defaultLayoutName,
         keys: defaultLayout.map((key) => ({
@@ -98,8 +113,13 @@ export function parseKeymapC(
       keymap: "default",
       layout: layers[0]?.layout || defaultLayoutName,
       layers,
+      dynamicLayerCount,
+      dynamicComboCount,
+      dynamicMacroCount,
+      dynamicTapDanceCount,
+      dynamicOverrideCount,
       userIncludes,
-      userCode
+      userCode,
     };
   }
 
@@ -110,12 +130,12 @@ export function parseKeymapC(
   let currentPos = 0;
   let currentLayer = 0;
 
-  while (currentLayer < targetLayerCount && currentPos < layersStr.length) {
+  while (currentLayer < dynamicLayerCount && currentPos < layersStr.length) {
     // LAYOUTマクロを探す
     const layoutMatch = layersStr.slice(currentPos).match(/LAYOUT\S*\s*\(/);
     if (!layoutMatch) {
       // 残りのレイヤーをデフォルト値で埋める
-      for (let i = currentLayer; i < targetLayerCount; i++) {
+      for (let i = currentLayer; i < dynamicLayerCount; i++) {
         layers.push({
           layout: defaultLayoutName,
           keys: defaultLayout.map((key) => ({
@@ -183,8 +203,13 @@ export function parseKeymapC(
     keymap: "default",
     layout: layers[0]?.layout || defaultLayoutName,
     layers,
+    dynamicLayerCount,
+    dynamicComboCount,
+    dynamicMacroCount,
+    dynamicTapDanceCount,
+    dynamicOverrideCount,
     userIncludes,
-    userCode
+    userCode,
   };
 }
 
@@ -199,6 +224,20 @@ function findMatchingBracket(str: string, openPos: number): number {
     }
   }
   return -1;
+}
+
+// config.hからdefineマクロの値を取得
+function getConfigValue(configH: string, name: string): number | undefined {
+  const match = configH.match(new RegExp(`#define\\s+${name}\\s+(.+)`));
+  if (!match) {
+    return undefined;
+  }
+  try {
+    const val = parseInt(match[1]);
+    return val;
+  } catch {
+    return undefined;
+  }
 }
 
 // QmkKeymapオブジェクトをkeymap.cファイルの内容に変換
