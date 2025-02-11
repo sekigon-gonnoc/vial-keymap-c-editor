@@ -1,5 +1,5 @@
 import { ComboEntry, generateComboEntries, parseComboEntries } from "./comboParser";
-import { generateMacroEntries, MacroEntry, parseMacroEntries } from "./macroParser";
+import { MacroEntry } from "./macroParser";
 import { generateTapDanceEntries, parseTapDanceEntries, TapDanceEntry } from "./tapDanceParser";
 
 export interface KeymapKey {

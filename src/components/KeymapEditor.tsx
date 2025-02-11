@@ -16,7 +16,6 @@ import {
 import { matchSorter } from "match-sorter";
 import { useEffect, useState } from "react";
 import { match, P } from "ts-pattern";
-import "../App.css";
 import { IVialData } from "../services/IVialData";
 import { ComboEditor } from "./ComboEditor";
 import { KeycodeCatalog } from "./KeycodeCatalog";
@@ -27,8 +26,8 @@ import {
   ModifierBits,
   QmkKeycode,
 } from "./keycodes/keycodeConverter";
-import { MacroEditor } from "./MacroEditor";
-import { OverrideEditor } from "./OverrideEditor";
+// import { MacroEditor } from "./MacroEditor";
+// import { OverrideEditor } from "./OverrideEditor";
 import { TapDanceEditor } from "./TapDanceEditor";
 
 export interface KeymapProperties {
@@ -725,9 +724,9 @@ export function KeymapEditor(props: {
     "layer",
   );
   const [tdIndex, setTdIndex] = useState(-1);
-  const [macroIndex, setMacroIndex] = useState(-1);
+  const [_macroIndex, setMacroIndex] = useState(-1);
   const [comboIndex, setComboIndex] = useState(-1);
-  const [overrideIndex, setOverrideIndex] = useState(-1);
+  const [_overrideIndex, setOverrideIndex] = useState(-1);
   const [lang, setLang] = useState("US");
   const [keycodeConverter, setKeycodeConverter] = useState<KeycodeConverter>();
 

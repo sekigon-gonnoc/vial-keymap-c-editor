@@ -11,7 +11,7 @@ export type CustomKeycode = {
 export class VialData implements IVialData {
   private _keymap: QmkKeymap;
   private qmkKeycodes: { [key: string]: QmkKeycode } = {};
-  private keycodeConverter: KeycodeConverter;
+  private keycodeConverter: KeycodeConverter | undefined = undefined;
 
   get keymap() {
     return this._keymap;
@@ -25,7 +25,7 @@ export class VialData implements IVialData {
       this.keymap.dynamicLayerCount,
       customKeycodes,
       32,
-      this._keymap.tapDanceEntries.length,
+      this._keymap.tapDanceEntries.length
     );
     for (let k = 0; k < 0xffff; k++) {
       const key = this.keycodeConverter.convertIntToKeycode(k);
@@ -46,7 +46,7 @@ export class VialData implements IVialData {
     return 0;
   }
 
-  async SetLayoutOption(layout: number): Promise<number> {
+  async SetLayoutOption(_layout: number): Promise<number> {
     return 0;
   }
 
@@ -106,6 +106,9 @@ export class VialData implements IVialData {
     col: number,
     keycode: number
   ): Promise<void> {
+    if (!this.keycodeConverter) {
+      throw new Error("KeycodeConverter is not initialized");
+    }
     const qk = this.keycodeConverter.convertIntToKeycode(keycode);
     const index = this._keymap.layers[layer].keys.findIndex(
       (key) => key.matrix[0] === row && key.matrix[1] === col
@@ -117,12 +120,12 @@ export class VialData implements IVialData {
     }
   }
 
-  async GetEncoder(layer: number, count: number): Promise<number[][]> {
+  async GetEncoder(_layer: number, count: number): Promise<number[][]> {
     return Array(count).fill([0, 0]);
   }
 
   async SetEncoder(
-    values: {
+    _values: {
       layer: number;
       index: number;
       direction: number;
@@ -192,12 +195,18 @@ export class VialData implements IVialData {
       tappingTerm: number;
     }[]
   ): Promise<void> {
+    if (this.keycodeConverter) {
+      throw new Error("KeycodeConverter is not initialized");
+    }
     values.forEach((value) => {
       this._keymap.tapDanceEntries[value.id] = {
-        onTap: this.keycodeConverter.convertIntToKeycode(value.onTap).key,
-        onHold: this.keycodeConverter.convertIntToKeycode(value.onHold).key,
-        onDoubleTap: this.keycodeConverter.convertIntToKeycode(value.onDoubleTap).key,
-        onTapHold: this.keycodeConverter.convertIntToKeycode(value.onTapHold).key,
+        onTap: this.keycodeConverter!.convertIntToKeycode(value.onTap).key,
+        onHold: this.keycodeConverter!.convertIntToKeycode(value.onHold).key,
+        onDoubleTap: this.keycodeConverter!.convertIntToKeycode(
+          value.onDoubleTap
+        ).key,
+        onTapHold: this.keycodeConverter!.convertIntToKeycode(value.onTapHold)
+          .key,
         tappingTerm: value.tappingTerm,
       };
     });
@@ -208,29 +217,18 @@ export class VialData implements IVialData {
   }
 
   async GetMacroBufferLen(): Promise<number> {
-    return this.keymap.macroEntries.reduce((sum, entry) => sum + entry.data.length, 0);
+    return 0;
   }
 
-  async GetMacroBuffer(offset: number, length: number): Promise<number[]> {
-    const allData = this.keymap.macroEntries.flatMap(entry => entry.data);
-    return allData.slice(offset, offset + length);
+  async GetMacroBuffer(_offset: number, _length: number): Promise<number[]> {
+    return [];
   }
 
-  async GetMacros(macroCount: number): Promise<number[][]> {
-    return this.keymap.macroEntries
-      .slice(0, macroCount)
-      .map(entry => entry.data);
+  async GetMacros(_macroCount: number): Promise<number[][]> {
+    return [];
   }
 
-  async SetMacroBuffer(offset: number, data: number[]): Promise<void> {
-    // マクロバッファの更新処理
-    // 注: この実装は簡略化されています
-    if (this.keymap.macroEntries.length === 0) {
-      this.keymap.macroEntries.push({ data: data });
-    } else {
-      this.keymap.macroEntries[0].data = data;
-    }
-  }
+  async SetMacroBuffer(_offset: number, _data: number[]): Promise<void> {}
 
   async GetCombo(
     ids: number[]
@@ -262,13 +260,16 @@ export class VialData implements IVialData {
       output: number;
     }[]
   ): Promise<void> {
+    if (!this.keycodeConverter) {
+      throw new Error("KeycodeConverter is not initialized");
+    }
     values.forEach((value) => {
       this._keymap.comboEntries[value.id] = {
-        key1: this.keycodeConverter.convertIntToKeycode(value.key1).key,
-        key2: this.keycodeConverter.convertIntToKeycode(value.key2).key,
-        key3: this.keycodeConverter.convertIntToKeycode(value.key3).key,
-        key4: this.keycodeConverter.convertIntToKeycode(value.key4).key,
-        output: this.keycodeConverter.convertIntToKeycode(value.output).key,
+        key1: this.keycodeConverter!.convertIntToKeycode(value.key1).key,
+        key2: this.keycodeConverter!.convertIntToKeycode(value.key2).key,
+        key3: this.keycodeConverter!.convertIntToKeycode(value.key3).key,
+        key4: this.keycodeConverter!.convertIntToKeycode(value.key4).key,
+        output: this.keycodeConverter!.convertIntToKeycode(value.output).key,
       };
     });
   }
@@ -296,7 +297,7 @@ export class VialData implements IVialData {
   }
 
   async SetOverride(
-    values: {
+    _values: {
       id: number;
       trigger: number;
       replacement: number;
@@ -309,12 +310,12 @@ export class VialData implements IVialData {
   ): Promise<void> {}
 
   async GetQuantumSettingsValue(
-    id: number[]
+    _id: number[]
   ): Promise<{ [id: number]: number }> {
     return {};
   }
 
-  async SetQuantumSettingsValue(value: {
+  async SetQuantumSettingsValue(_value: {
     [id: number]: number;
   }): Promise<void> {}
 
@@ -324,9 +325,9 @@ export class VialData implements IVialData {
     return id.map(() => 0);
   }
 
-  async SetCustomValue(id: number[], value: number): Promise<void> {}
+  async SetCustomValue(_id: number[], _value: number): Promise<void> {}
 
-  async SaveCustomValue(id: number[]): Promise<void> {}
+  async SaveCustomValue(_id: number[]): Promise<void> {}
 
   async ResetEeprom(): Promise<void> {}
 
