@@ -27,7 +27,6 @@ interface RequiredFiles {
     vialJson?: RepositoryFile;
     keyboardJson?: RepositoryFile;
     keymapC?: RepositoryFile;
-    configH?: RepositoryFile;
 }
 
 // GitHubのブランチ情報の型定義
@@ -49,7 +48,7 @@ interface TreeResponse {
 }
 
 interface GitHubAppProps {
-    onloaded: (vialJson: any, keyboardJson?: any) => void;
+    onloaded: (vialJson: any, keyboardJson: any, keymapC: string) => void;
 }
 
 export function GitHubApp(props: GitHubAppProps) {
@@ -78,6 +77,22 @@ export function GitHubApp(props: GitHubAppProps) {
             const jsonData = await response.json();
             const decodedContent = atob(jsonData.content);
             return Hjson.parse(decodedContent);
+        } catch (error) {
+            console.error(`Failed to fetch ${path}:`, error);
+            return null;
+        }
+    };
+
+    // テキストファイルの内容を取得する関数
+    const loadTextFile = async (owner: string, repo: string, branch: string, path: string) => {
+        try {
+            const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('%2F');
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/github/repos/${owner}/${repo}/${branch}/${encodedPath}`,
+                { credentials: 'include' }
+            );
+            const data = await response.json();
+            return atob(data.content);
         } catch (error) {
             console.error(`Failed to fetch ${path}:`, error);
             return null;
@@ -163,17 +178,15 @@ export function GitHubApp(props: GitHubAppProps) {
             
             setRequiredFiles(foundFiles);
 
-            // vial.jsonとkeyboard.jsonを読み込む
-            if (foundFiles.vialJson) {
-                const vialJson = await loadJsonFile(owner, repo, branch, foundFiles.vialJson.path);
-                const keyboardJson = foundFiles.keyboardJson ? 
-                    await loadJsonFile(owner, repo, branch, foundFiles.keyboardJson.path) :
-                    undefined;
+            if (foundFiles.vialJson && foundFiles.keyboardJson && foundFiles.keymapC) {
+                const [vialJson, keyboardJson, keymapC] = await Promise.all([
+                    loadJsonFile(owner, repo, branch, foundFiles.vialJson.path),
+                    loadJsonFile(owner, repo, branch, foundFiles.keyboardJson.path),
+                    loadTextFile(owner, repo, branch, foundFiles.keymapC.path)
+                ]);
                 
-                if (vialJson && keyboardJson) {
-                    props.onloaded(vialJson, keyboardJson);
-                } else {
-                    console.error('Failed to load JSON files:', vialJson, keyboardJson);
+                if (vialJson && keyboardJson && keymapC) {
+                    props.onloaded(vialJson, keyboardJson, keymapC);
                 }
             }
         } catch (error) {
@@ -253,8 +266,8 @@ export function GitHubApp(props: GitHubAppProps) {
                             <Typography color={requiredFiles.vialJson ? 'success.main' : 'error.main'}>
                                 vial.json: {requiredFiles.vialJson ? 'Found' : 'Not found'}
                             </Typography>
-                            <Typography color={requiredFiles.keyboardJson ? 'success.main' : 'warning.main'}>
-                                keyboard.json: {requiredFiles.keyboardJson ? 'Found' : 'Not found (optional)'}
+                            <Typography color={requiredFiles.keyboardJson ? 'success.main' : 'error.main'}>
+                                keyboard.json: {requiredFiles.keyboardJson ? 'Found' : 'Not found'}
                             </Typography>
                             <Typography color={requiredFiles.keymapC ? 'success.main' : 'error.main'}>
                                 keymap.c: {requiredFiles.keymapC ? 'Found' : 'Not found'}
