@@ -3,7 +3,7 @@
 vialの初期キーマップをGUIから設定するためのツールです。 GitHubとの連携を許可することでkeymap.cを読みこみ、編集した結果をコミットできます。
 
 対象リポジトリのファイル構成は下記のようにしてください。
-[サンプルはこちらです。](https://)
+[サンプルはこちらです。](https://github.com/sekigon-gonnoc/auto-kdk-tutorial-data-wired-controller)
 
 ```
 .github/
