@@ -29,6 +29,8 @@ function App() {
         oncommit={() => generateKeymapC(vialData.keymap)}
       />
       {vialJson && keyboardJson && keymapC && (
+        <>
+        <div style={{ height: "16px" }} />
         <KeymapEditor
           keymap={vialJson}
           via={vialData}
@@ -40,6 +42,7 @@ function App() {
             override: 0,
           }}
         />
+        </>
       )}
     </>
   );
