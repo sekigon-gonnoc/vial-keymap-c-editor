@@ -1,7 +1,14 @@
+import { sliderClasses } from "@mui/material";
+
+export interface KeymapKey {
+    keycode: string;  // キーコード (例: "KC_A")
+    matrix: number[];  // [row, col]のマトリクス座標
+}
+
 export interface KeymapLayer {
     name?: string;
-    layout: string;  // LAYOUTマクロの名前 (例: "LAYOUT", "LAYOUT_60_ansi" など)
-    keys: string[];  // キーコードを文字列で保持 (例: "KC_A", "KC_LSFT" など)
+    layout: string;  // LAYOUTマクロの名前
+    keys: KeymapKey[];  // キーコードとマトリクス情報
 }
 
 export interface QmkKeymap {
@@ -16,59 +23,136 @@ export interface QmkKeymap {
 }
 
 // C言語のkeymap.cファイルをパースしてQmkKeymapオブジェクトを生成
-export function parseKeymapC(content: string): QmkKeymap {
-    const keymap: QmkKeymap = {
-        version: 1,
-        author: "",
-        keyboard: "",
-        keymap: "default",
-        layout: "",
-        layers: []
-    };
+export function parseKeymapC(
+  content: string,
+  keyboardJson: {
+    layouts: { [key: string]: { layout: { matrix: number[] }[] } };
+    dynamic_keymap?: { layer_count?: number };
+  }
+): QmkKeymap {
+  const keymap: QmkKeymap = {
+    version: 1,
+    author: "",
+    keyboard: "",
+    keymap: "default",
+    layout: "",
+    layers: [],
+  };
 
-    // コメントを除去
-    content = content.replace(/\/\*[\s\S]*?\*\//g, "");
-    content = content.replace(/\/\/.*/g, "");
+  // コメントを除去
+  content = content.replace(/\/\*[\s\S]*?\*\//g, "");
+  content = content.replace(/\/\/.*/g, "");
 
-    // レイヤー配列を探す
-    const layerMatch = content.match(/const\s+uint16_t\s+PROGMEM\s+keymaps\[[\s\S]*?\]\s*=\s*\{([\s\S]*?)\};/);
-    if (!layerMatch) {
-        throw new Error("No keymap array found");
+  // レイヤー配列を探す
+  const layerMatch = content.match(
+    /const\s+uint16_t\s+PROGMEM\s+keymaps\[[\s\S]*?\]\s*=\s*\{([\s\S]*?)\};/
+  );
+  if (!layerMatch) {
+    throw new Error("No keymap array found");
+  }
+
+  // レイヤーごとに分割せずに全体を処理
+  const layersStr = layerMatch[1];
+  const targetLayerCount = keyboardJson.dynamic_keymap?.layer_count ?? 4;
+  const defaultLayoutName = Object.keys(keyboardJson.layouts)[0];
+  const defaultLayout = keyboardJson.layouts[defaultLayoutName]?.layout;
+
+  if (!defaultLayout) {
+    throw new Error("No layout information found in keyboard.json");
+  }
+
+  // レイヤー定義を探索
+  const layers: KeymapLayer[] = [];
+  let currentPos = 0;
+  let currentLayer = 0;
+
+  while (currentLayer < targetLayerCount && currentPos < layersStr.length) {
+    // LAYOUTマクロを探す
+    const layoutMatch = layersStr.slice(currentPos).match(/LAYOUT\S*\s*\(/);
+    if (!layoutMatch) {
+      // 残りのレイヤーをデフォルト値で埋める
+      for (let i = currentLayer; i < targetLayerCount; i++) {
+        layers.push({
+          layout: defaultLayoutName,
+          keys: defaultLayout.map((key) => ({
+            keycode: "KC_TRNSPARENT",
+            matrix: key.matrix,
+          })),
+        });
+      }
+      break;
     }
 
-    // レイヤーごとに分割
-    const layersStr = layerMatch[1];
-    const layers = layersStr.split(/\}\s*,\s*\{/);
+    const layoutStartPos = currentPos + layoutMatch.index!;
+    const layoutEndPos = findMatchingBracket(
+      layersStr,
+      layoutStartPos + layoutMatch[0].length - 1
+    );
+    if (layoutEndPos === -1) {
+      throw new Error(`Invalid LAYOUT macro at layer ${currentLayer}`);
+    }
 
-    // レイヤーごとにキーコードを解析
-    keymap.layers = layers.map(layer => {
-        // LAYOUTマクロを抽出
-        const layoutMatch = layer.match(/(\w+)\s*\(/);
-        const layoutName = layoutMatch ? layoutMatch[1] : "LAYOUT";
+    // LAYOUTマクロ名を取得
+    const layoutName = layoutMatch[0].trim().slice(0, -1); // 末尾の(を除去
 
-        // キーコードを抽出
-        const keycodeMatch = layer.match(/\(([\s\S]*)\)/);
-        if (!keycodeMatch) {
-            return { layout: layoutName, keys: [] };
-        }
+    // キーコードを抽出
+    const keycodesStr = layersStr.slice(
+      layoutStartPos + layoutMatch[0].length,
+      layoutEndPos
+    );
+    const keycodes = keycodesStr
+      .split(",")
+      .map(
+        (code) =>
+          code
+            .replace(/\\/g, "") // エスケープ文字を除去
+            .replace(/\n/g, "") // 改行を除去
+            .replace(/\r/g, "") // 改行を除去
+            .trim()
+      )
+      .filter((code) => code.length > 0);
 
-        const keycodes = keycodeMatch[1]
-            .split(',')
-            .map(code => code.trim())
-            .filter(code => code.length > 0);
+    // レイアウト情報を取得
+    const layoutInfo =
+      keyboardJson.layouts[layoutName] ||
+      keyboardJson.layouts[defaultLayoutName];
 
-        return {
-            layout: layoutName,
-            keys: keycodes
-        };
+    // キーコードとマトリクス情報を紐付け
+    const keys: KeymapKey[] = layoutInfo.layout.map((key, index) => ({
+      keycode: keycodes[index] || "KC_TRNSPARENT",
+      matrix: key.matrix,
+    }));
+
+    layers.push({
+      layout: layoutName,
+      keys,
     });
 
-    // レイアウトマクロ名をkeymap.layoutに設定
-    if (keymap.layers.length > 0) {
-        keymap.layout = keymap.layers[0].layout;
-    }
+    currentPos = layoutEndPos + 1;
+    currentLayer++;
+  }
 
-    return keymap;
+  return {
+    version: 1,
+    author: "",
+    keyboard: "",
+    keymap: "default",
+    layout: layers[0]?.layout || defaultLayoutName,
+    layers
+  };
+}
+
+// 対応する閉じ括弧の位置を探す
+function findMatchingBracket(str: string, openPos: number): number {
+  let depth = 1;
+  for (let i = openPos + 1; i < str.length; i++) {
+    if (str[i] === '(') depth++;
+    if (str[i] === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
 }
 
 // QmkKeymapオブジェクトをkeymap.cファイルの内容に変換
@@ -85,7 +169,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         
         // キーコードを4つごとに改行を入れて整形
         for (let i = 0; i < layer.keys.length; i += 4) {
-            output += '        ' + layer.keys.slice(i, i + 4).join(', ');
+            output += '        ' + layer.keys.slice(i, i + 4)
+                .map(key => key.keycode)
+                .join(', ');
             if (i + 4 < layer.keys.length) {
                 output += ',';
             }

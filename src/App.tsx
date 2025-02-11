@@ -8,18 +8,24 @@ function App() {
   const [vialJson, setVialJson] = useState<any>(undefined);
   const [keyboardJson, setKeyboardJson] = useState<any>(undefined);
   const [keymapC, setKeymapC] = useState<QmkKeymap | undefined>(undefined);
+  const [vialData, setVialData] = useState<VialData>(new VialData());
 
   return (
     <>
-      <GitHubApp onloaded={(vialJson, keyboardJson, keymapC) => {
+      <GitHubApp onloaded={async (vialJson, keyboardJson, keymapC) => {
         setVialJson(vialJson);
         setKeyboardJson(keyboardJson);
-        setKeymapC(parseKeymapC(keymapC));
+        const newKeymapC = parseKeymapC(keymapC, keyboardJson);
+        setKeymapC(newKeymapC);
+        console.log(newKeymapC);
+        const newVialData = new VialData(newKeymapC, newKeymapC.layers.length);
+        await newVialData.initKeycodeTable();
+        setVialData(newVialData);
       }} />
       {vialJson && keyboardJson && keymapC && (
         <KeymapEditor
           keymap={vialJson}
-          via={new VialData()}
+          via={vialData}
           dynamicEntryCount={{
             layer: keyboardJson.dynamic_keymap?.layer_count ?? 4,
             macro: 0,
