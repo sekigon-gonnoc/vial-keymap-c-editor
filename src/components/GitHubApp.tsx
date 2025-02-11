@@ -25,6 +25,7 @@ interface RepositoryFile {
 // キーボード設定に必要なファイルの型定義
 interface RequiredFiles {
     vialJson?: RepositoryFile;
+    keyboardJson?: RepositoryFile;
     keymapC?: RepositoryFile;
     configH?: RepositoryFile;
 }
@@ -48,7 +49,7 @@ interface TreeResponse {
 }
 
 interface GitHubAppProps {
-    onloaded: (vialJson: any) => void;
+    onloaded: (vialJson: any, keyboardJson?: any) => void;
 }
 
 export function GitHubApp(props: GitHubAppProps) {
@@ -65,8 +66,8 @@ export function GitHubApp(props: GitHubAppProps) {
     // 選択中のブランチ名
     const [selectedBranch, setSelectedBranch] = useState<string>('');
 
-    // vial.jsonの内容を取得する関数
-    const loadVialJson = async (owner: string, repo: string, branch: string, path: string) => {
+    // JSONファイルの内容を取得する関数
+    const loadJsonFile = async (owner: string, repo: string, branch: string, path: string) => {
         try {
             // パスのスラッシュを明示的にエンコード
             const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('%2F');
@@ -74,13 +75,12 @@ export function GitHubApp(props: GitHubAppProps) {
                 `${import.meta.env.VITE_BACKEND_URL}/github/repos/${owner}/${repo}/${branch}/${encodedPath}`,
                 { credentials: 'include' }
             );
-            const vialJson = await response.json();
-            const decodedContent = atob(vialJson.content);
-            const parsedJson = Hjson.parse(decodedContent);
-
-            props.onloaded(parsedJson);
+            const jsonData = await response.json();
+            const decodedContent = atob(jsonData.content);
+            return Hjson.parse(decodedContent);
         } catch (error) {
-            console.error('Failed to fetch vial.json:', error);
+            console.error(`Failed to fetch ${path}:`, error);
+            return null;
         }
     };
 
@@ -155,17 +155,27 @@ export function GitHubApp(props: GitHubAppProps) {
             treeData.tree.forEach(file => {
                 if (file.type === 'blob') {
                     const fileName = file.path.split('/').pop() || '';
-                    if (fileName === 'vial.json') {
-                        foundFiles.vialJson = { name: fileName, path: file.path, type: 'file' };
-                        // vial.jsonが見つかったら内容を読み込む
-                        loadVialJson(owner, repo, branch, file.path);
-                    }
+                    if (fileName === 'vial.json') foundFiles.vialJson = { name: fileName, path: file.path, type: 'file' };
+                    if (fileName === 'keyboard.json') foundFiles.keyboardJson = { name: fileName, path: file.path, type: 'file' };
                     if (fileName === 'keymap.c') foundFiles.keymapC = { name: fileName, path: file.path, type: 'file' };
-                    if (fileName === 'config.h') foundFiles.configH = { name: fileName, path: file.path, type: 'file' };
                 }
             });
             
             setRequiredFiles(foundFiles);
+
+            // vial.jsonとkeyboard.jsonを読み込む
+            if (foundFiles.vialJson) {
+                const vialJson = await loadJsonFile(owner, repo, branch, foundFiles.vialJson.path);
+                const keyboardJson = foundFiles.keyboardJson ? 
+                    await loadJsonFile(owner, repo, branch, foundFiles.keyboardJson.path) :
+                    undefined;
+                
+                if (vialJson && keyboardJson) {
+                    props.onloaded(vialJson, keyboardJson);
+                } else {
+                    console.error('Failed to load JSON files:', vialJson, keyboardJson);
+                }
+            }
         } catch (error) {
             console.error('Failed to fetch repository files:', error);
         }
@@ -243,11 +253,11 @@ export function GitHubApp(props: GitHubAppProps) {
                             <Typography color={requiredFiles.vialJson ? 'success.main' : 'error.main'}>
                                 vial.json: {requiredFiles.vialJson ? 'Found' : 'Not found'}
                             </Typography>
+                            <Typography color={requiredFiles.keyboardJson ? 'success.main' : 'warning.main'}>
+                                keyboard.json: {requiredFiles.keyboardJson ? 'Found' : 'Not found (optional)'}
+                            </Typography>
                             <Typography color={requiredFiles.keymapC ? 'success.main' : 'error.main'}>
                                 keymap.c: {requiredFiles.keymapC ? 'Found' : 'Not found'}
-                            </Typography>
-                            <Typography color={requiredFiles.configH ? 'success.main' : 'error.main'}>
-                                config.h: {requiredFiles.configH ? 'Found' : 'Not found'}
                             </Typography>
                         </Stack>
                     )}

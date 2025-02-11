@@ -5,10 +5,15 @@ import { VialData } from "./services/VialData";
 
 function App() {
   const [vialJson, setVialJson] = useState<any>(undefined);
+  const [keyboardJson, setKeyboardJson] = useState<any>(undefined);
+
   return (
     <>
-      <GitHubApp onloaded={(vialJson) => setVialJson(vialJson)} />
-      {vialJson && (
+      <GitHubApp onloaded={(vialJson, keyboardJson) => {
+        setVialJson(vialJson);
+        setKeyboardJson(keyboardJson);
+      }} />
+      {vialJson && keyboardJson && (
         <KeymapEditor
           keymap={vialJson}
           via={new VialData()}
