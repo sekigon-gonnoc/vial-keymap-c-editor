@@ -44,7 +44,7 @@ function App() {
               layer: vialData.keymap.dynamicLayerCount,
               macro: vialData.keymap.dynamicMacroCount,
               tapdance: vialData.keymap.tapDanceEntries.length,
-              combo: vialData.keymap.dynamicComboCount,
+              combo: vialData.keymap.comboEntries.length,
               override: vialData.keymap.dynamicOverrideCount,
             }}
           />

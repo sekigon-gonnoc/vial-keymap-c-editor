@@ -134,7 +134,7 @@ export class VialData implements IVialData {
   }> {
     return {
       tapdance: this.keymap.tapDanceEntries.length,
-      combo: this.keymap.dynamicComboCount,
+      combo: this.keymap.comboEntries.length,
       override: this.keymap.dynamicOverrideCount,
     };
   }
@@ -144,7 +144,7 @@ export class VialData implements IVialData {
       layer: this.keymap.dynamicLayerCount,
       macro: this.keymap.dynamicMacroCount,
       tapdance: this.keymap.tapDanceEntries.length,
-      combo: this.keymap.dynamicComboCount,
+      combo: this.keymap.comboEntries.length,
       override: this.keymap.dynamicOverrideCount,
     };
   }
@@ -223,7 +223,19 @@ export class VialData implements IVialData {
   ): Promise<
     { key1: number; key2: number; key3: number; key4: number; output: number }[]
   > {
-    return ids.map(() => ({ key1: 0, key2: 0, key3: 0, key4: 0, output: 0 }));
+    return ids.map((id) => {
+      const entry = this._keymap.comboEntries[id];
+      if (!entry) {
+        return { key1: 0, key2: 0, key3: 0, key4: 0, output: 0 };
+      }
+      return {
+        key1: this.qmkKeycodes[entry.key1]?.value ?? 0,
+        key2: this.qmkKeycodes[entry.key2]?.value ?? 0,
+        key3: this.qmkKeycodes[entry.key3]?.value ?? 0,
+        key4: this.qmkKeycodes[entry.key4]?.value ?? 0,
+        output: this.qmkKeycodes[entry.output]?.value ?? 0,
+      };
+    });
   }
 
   async SetCombo(
@@ -235,7 +247,17 @@ export class VialData implements IVialData {
       key4: number;
       output: number;
     }[]
-  ): Promise<void> {}
+  ): Promise<void> {
+    values.forEach((value) => {
+      this._keymap.comboEntries[value.id] = {
+        key1: this.keycodeConverter.convertIntToKeycode(value.key1).key,
+        key2: this.keycodeConverter.convertIntToKeycode(value.key2).key,
+        key3: this.keycodeConverter.convertIntToKeycode(value.key3).key,
+        key4: this.keycodeConverter.convertIntToKeycode(value.key4).key,
+        output: this.keycodeConverter.convertIntToKeycode(value.output).key,
+      };
+    });
+  }
 
   async GetOverride(ids: number[]): Promise<
     {

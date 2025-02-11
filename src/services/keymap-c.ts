@@ -1,4 +1,3 @@
-import { sliderClasses } from "@mui/material";
 
 export interface KeymapKey {
     keycode: string;  // キーコード (例: "KC_A")
@@ -19,6 +18,14 @@ export interface TapDanceEntry {
     tappingTerm: number;
 }
 
+export interface ComboEntry {
+    key1: string;
+    key2: string;
+    key3: string;
+    key4: string;
+    output: string;
+}
+
 export interface QmkKeymap {
     version: number;
     author: string;
@@ -31,7 +38,7 @@ export interface QmkKeymap {
     dynamicLayerCount: number;
     dynamicMacroCount: number;
     tapDanceEntries: TapDanceEntry[];
-    dynamicComboCount: number;
+    comboEntries: ComboEntry[];
     dynamicOverrideCount: number;
     userIncludes?: string;  // ユーザー定義インクルード部分
     userCode?: string;      // ユーザー定義コード部分
@@ -74,6 +81,50 @@ function parseTapDanceEntries(
       onDoubleTap: match[3].trim(),
       onTapHold: match[4].trim(),
       tappingTerm: parseInt(match[5]),
+    };
+    index++;
+  }
+
+  return entries;
+}
+
+// Comboマクロの解析
+function parseComboEntries(
+  content: string,
+  entryCount: number
+): ComboEntry[] {
+  const defaultComboEntry: ComboEntry = {
+    key1: "KC_NO",
+    key2: "KC_NO",
+    key3: "KC_NO",
+    key4: "KC_NO",
+    output: "KC_NO",
+  };
+  const entries: ComboEntry[] = Array.from(
+    { length: entryCount },
+    () => ({ ...defaultComboEntry })
+  );
+
+  // combo定義を探す
+  const comboMatch = content.match(
+    /const\s+vial_combo_entry_t\s+(?:PROGMEM\s+)?default_combo_entries\[\]\s*=\s*\{([\s\S]*?)\};/
+  );
+  if (!comboMatch) return entries;
+
+  // COMBO_ENTRYマクロを探す
+  const entryRegex =
+    /COMBO_ENTRY\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*\)/g;
+  const entriesStr = comboMatch[1];
+
+  let match;
+  let index = 0;
+  while ((match = entryRegex.exec(entriesStr)) !== null && index < entryCount) {
+    entries[index] = {
+      key1: match[1].trim(),
+      key2: match[2].trim(),
+      key3: match[3].trim(),
+      key4: match[4].trim(),
+      output: match[5].trim(),
     };
     index++;
   }
@@ -249,6 +300,7 @@ export function parseKeymapC(
   const { userIncludes, userCode } = extractUserSections(content);
   const layers = parseKeymap(content, dynamicLayerCount, defaultLayout, defaultLayoutName);
   const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
+  const comboEntries = parseComboEntries(content, dynamicComboCount);
 
   return {
     version: 1,
@@ -258,10 +310,10 @@ export function parseKeymapC(
     layout: defaultLayoutName,
     layers,
     dynamicLayerCount,
-    dynamicComboCount,
     dynamicMacroCount,
     dynamicOverrideCount,
     tapDanceEntries,
+    comboEntries,
     userIncludes,
     userCode,
   };
@@ -341,6 +393,23 @@ export function generateKeymapC(keymap: QmkKeymap): string {
         keymap.tapDanceEntries.forEach((entry, index) => {
             output += `    TAP_DANCE_ENTRY(${entry.onTap}, ${entry.onHold}, ${entry.onDoubleTap}, ${entry.onTapHold}, ${entry.tappingTerm})`;
             if (index < keymap.tapDanceEntries.length - 1) {
+                output += ",";
+            }
+            output += "\n";
+        });
+        output += "};\n";
+        output += `#endif\n`;
+    }
+
+    // Combo定義の生成
+    if (keymap.comboEntries && keymap.comboEntries.length > 0) {
+        output += "\n// Combo definitions\n";
+        output += `#define COMBO_ENTRY(k1, k2, k3, k4, result) ((vial_combo_entry_t){.input ={k1, k2, k3, k4}, .output = result})\n`;
+        output += `#if VIAL_COMBO_ENTRIES > 0\n`;
+        output += "const vial_combo_entry_t default_combo_entries[] = {\n";
+        keymap.comboEntries.forEach((entry, index) => {
+            output += `    COMBO_ENTRY(${entry.key1}, ${entry.key2}, ${entry.key3}, ${entry.key4}, ${entry.output})`;
+            if (index < keymap.comboEntries.length - 1) {
                 output += ",";
             }
             output += "\n";
