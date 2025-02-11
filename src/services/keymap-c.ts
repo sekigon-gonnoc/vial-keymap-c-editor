@@ -30,31 +30,51 @@ export function parseKeymapC(
     dynamic_keymap?: { layer_count?: number };
   }
 ): QmkKeymap {
+  // キーマップ
+  const layers: KeymapLayer[] = [];
 
   // コメントを除去
   content = content.replace(/\/\*[\s\S]*?\*\//g, "");
   content = content.replace(/\/\/.*/g, "");
+
+  // keyboard.jsonのレイヤ定義
+  const defaultLayoutName = Object.keys(keyboardJson.layouts)[0];
+  const defaultLayout = keyboardJson.layouts[defaultLayoutName]?.layout;
+  const targetLayerCount = keyboardJson.dynamic_keymap?.layer_count ?? 4;
+
+  if (!defaultLayout) {
+    throw new Error("No layout information found in keyboard.json");
+  }
 
   // レイヤー配列を探す
   const layerMatch = content.match(
     /const\s+uint16_t\s+PROGMEM\s+keymaps\[[\s\S]*?\]\s*=\s*\{([\s\S]*?)\};/
   );
   if (!layerMatch) {
-    throw new Error("No keymap array found");
+    for (let i = 0; i < targetLayerCount; i++) {
+      layers.push({
+        layout: defaultLayoutName,
+        keys: defaultLayout.map((key) => ({
+          keycode: "KC_TRANSPARENT",
+          matrix: key.matrix,
+        })),
+      });
+    }
+
+    return {
+      version: 1,
+      author: "",
+      keyboard: "",
+      keymap: "default",
+      layout: layers[0]?.layout || defaultLayoutName,
+      layers,
+    };
   }
 
   // レイヤーごとに分割せずに全体を処理
   const layersStr = layerMatch[1];
-  const targetLayerCount = keyboardJson.dynamic_keymap?.layer_count ?? 4;
-  const defaultLayoutName = Object.keys(keyboardJson.layouts)[0];
-  const defaultLayout = keyboardJson.layouts[defaultLayoutName]?.layout;
-
-  if (!defaultLayout) {
-    throw new Error("No layout information found in keyboard.json");
-  }
 
   // レイヤー定義を探索
-  const layers: KeymapLayer[] = [];
   let currentPos = 0;
   let currentLayer = 0;
 

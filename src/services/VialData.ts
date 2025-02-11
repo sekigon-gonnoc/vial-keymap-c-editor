@@ -3,12 +3,17 @@ import { DynamicEntryCount, IVialData } from "./IVialData";
 import { QmkKeymap } from "./keymap-c";
 
 export class VialData implements IVialData {
-  private keymap: QmkKeymap;
+  private _keymap: QmkKeymap;
   private layerCount: number;
   private qmkKeycodes: { [key: string]: QmkKeycode } = {};
   private keycodeConverter: KeycodeConverter;
+
+  get keymap() {    
+    return this._keymap;
+  }
+
   constructor(keymap: QmkKeymap, layerCount: number) {
-    this.keymap = keymap;
+    this._keymap = keymap;
     this.layerCount = layerCount;
   }
   async initKeycodeTable() {
@@ -51,7 +56,7 @@ export class VialData implements IVialData {
     layer: number,
     matrix_definition: { rows: number; cols: number }
   ): Promise<number[]> {
-    const keymap = this.keymap.layers[layer].keys.map((key) => ({
+    const keymap = this._keymap.layers[layer].keys.map((key) => ({
       keycode: this.qmkKeycodes[key.keycode] ?? DefaultQmkKeycode,
       matrix: key.matrix,
     }));
@@ -79,7 +84,7 @@ export class VialData implements IVialData {
         index % matrix_definition.cols,
       ],
     }));
-    this.keymap.layers[layer].keys = keymap.map((key) => ({
+    this._keymap.layers[layer].keys = keymap.map((key) => ({
       keycode: key.keycode.key,
       matrix: key.matrix,
     }));
@@ -92,11 +97,11 @@ export class VialData implements IVialData {
     keycode: number
   ): Promise<void> {
     const qk = this.keycodeConverter.convertIntToKeycode(keycode);
-    const index = this.keymap.layers[layer].keys.findIndex(
+    const index = this._keymap.layers[layer].keys.findIndex(
       (key) => key.matrix[0] === row && key.matrix[1] === col
     );
     if (index >= 0) {
-      this.keymap.layers[layer].keys[index].keycode = qk.key;
+      this._keymap.layers[layer].keys[index].keycode = qk.key;
     } else {
       console.error(`Key not found at ${row}, ${col}`);
     }

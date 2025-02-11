@@ -49,6 +49,7 @@ interface TreeResponse {
 
 interface GitHubAppProps {
     onloaded: (vialJson: any, keyboardJson: any, keymapC: string) => void;
+    oncommit: () => string;
 }
 
 export function GitHubApp(props: GitHubAppProps) {
@@ -204,6 +205,45 @@ export function GitHubApp(props: GitHubAppProps) {
             .catch(error => console.error('Failed to logout:', error));
     };
 
+    // コミット処理
+    const handleCommit = async () => {    
+        const content = props.oncommit();
+        if (!content || !selectedRepo || !selectedBranch || !requiredFiles.keymapC) {
+            alert('Cannot commit: Repository, branch or keymap is not ready');
+            return;
+        }
+
+        try {
+            const [owner, repo] = selectedRepo.split('/');
+            const encodedPath = requiredFiles.keymapC.path.split('/').map(segment => encodeURIComponent(segment)).join('%2F');
+            
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/github/repos/${owner}/${repo}/${selectedBranch}/${encodedPath}`,
+                {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        message: 'Update keymap.c via Vial Keymap Editor'
+                    })
+                }
+            );
+            console.log(content)
+
+            if (!response.ok) {
+                throw new Error('Failed to commit changes');
+            }
+
+            alert('Keymap updated successfully!');
+        } catch (error) {
+            console.error('Failed to commit changes:', error);
+            alert('Failed to update keymap. Please try again.');
+        }
+    };
+
     // ログイン済みの場合のUI
     if (avatarUrl) {
         return (
@@ -293,6 +333,16 @@ export function GitHubApp(props: GitHubAppProps) {
                     keymap.c: {requiredFiles.keymapC?.path ?? "Not found"}
                   </Typography>
                 </Stack>
+              )}
+              {/* コミットボタン */}
+              {requiredFiles.vialJson && requiredFiles.keyboardJson && requiredFiles.keymapC && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleCommit}
+                >
+                  Commit Changes
+                </Button>
               )}
             </Stack>
           </Container>
