@@ -53,22 +53,20 @@ export function parseComboEntries(
 
 
 export function generateComboEntries(entries: ComboEntry[]): string {
-    let output = '';
-    // Combo定義の生成
-    if (entries && entries.length > 0) {
-        output += "\n// Combo definitions\n";
-        output += `#define COMBO_ENTRY(k1, k2, k3, k4, result) ((vial_combo_entry_t){.input ={k1, k2, k3, k4}, .output = result})\n`;
-        output += `#if VIAL_COMBO_ENTRIES > 0\n`;
-        output += "const vial_combo_entry_t PROGMEM default_combo_entries[] = {\n";
-        entries.forEach((entry, index) => {
-            output += `    COMBO_ENTRY(${entry.key1}, ${entry.key2}, ${entry.key3}, ${entry.key4}, ${entry.output})`;
-            if (index < entries.length - 1) {
-                output += ",";
-            }
-            output += "\n";
-        });
-        output += "};\n";
-        output += `#endif\n`;
+  let output = "";
+  // Combo定義の生成
+  output += "\n// Combo definitions\n";
+  output += `#define COMBO_ENTRY(k1, k2, k3, k4, result) ((vial_combo_entry_t){.input ={k1, k2, k3, k4}, .output = result})\n`;
+  output += `#if VIAL_COMBO_ENTRIES > 0\n`;
+  output += "const vial_combo_entry_t PROGMEM default_combo_entries[] = {\n";
+  entries.forEach((entry, index) => {
+    output += `    COMBO_ENTRY(${entry.key1}, ${entry.key2}, ${entry.key3}, ${entry.key4}, ${entry.output})`;
+    if (index < entries.length - 1) {
+      output += ",";
     }
-    return output;
+    output += "\n";
+  });
+  output += "};\n";
+  output += `#endif\n`;
+  return output;
 }

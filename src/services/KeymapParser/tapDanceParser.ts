@@ -52,22 +52,21 @@ export function parseTapDanceEntries(
 }
 
 export function generateTapDanceEntries(entries: TapDanceEntry[]): string {
-    let output = '';
-    // Tap Dance定義の生成
-    if (entries && entries.length > 0) {
-        output += "\n// Tap Dance definitions\n";
-        output += `#define TAP_DANCE_ENTRY(onTap, onHold, onDoubleTap, onTapHold, tappingTerm) ((vial_tap_dance_entry_t){.on_tap = onTap, .on_hold = onHold, .on_double_tap = onDoubleTap, .on_tap_hold = onTapHold, .custom_tapping_term = tappingTerm})\n`;
-        output += `#if VIAL_TAP_DANCE_ENTRIES > 0\n`;
-        output += "const vial_tap_dance_entry_t default_tap_dance_entries[] = {\n";
-        entries.forEach((entry, index) => {
-            output += `    TAP_DANCE_ENTRY(${entry.onTap}, ${entry.onHold}, ${entry.onDoubleTap}, ${entry.onTapHold}, ${entry.tappingTerm})`;
-            if (index < entries.length - 1) {
-                output += ",";
-            }
-            output += "\n";
-        });
-        output += "};\n";
-        output += `#endif\n`;
+  let output = "";
+  // Tap Dance定義の生成
+  output += "\n// Tap Dance definitions\n";
+  output += `#define TAP_DANCE_ENTRY(onTap, onHold, onDoubleTap, onTapHold, tappingTerm) ((vial_tap_dance_entry_t){.on_tap = onTap, .on_hold = onHold, .on_double_tap = onDoubleTap, .on_tap_hold = onTapHold, .custom_tapping_term = tappingTerm})\n`;
+  output += `#if VIAL_TAP_DANCE_ENTRIES > 0\n`;
+  output += "const vial_tap_dance_entry_t default_tap_dance_entries[] = {\n";
+  entries.forEach((entry, index) => {
+    output += `    TAP_DANCE_ENTRY(${entry.onTap}, ${entry.onHold}, ${entry.onDoubleTap}, ${entry.onTapHold}, ${entry.tappingTerm})`;
+    if (index < entries.length - 1) {
+      output += ",";
     }
-    return output;
+    output += "\n";
+  });
+  output += "};\n";
+  output += `#endif\n`;
+
+  return output;
 }
