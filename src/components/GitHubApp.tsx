@@ -27,6 +27,7 @@ interface RequiredFiles {
     vialJson?: RepositoryFile;
     keyboardJson?: RepositoryFile;
     keymapC?: RepositoryFile;
+    configH?: RepositoryFile;
 }
 
 // GitHubのブランチ情報の型定義
@@ -48,7 +49,7 @@ interface TreeResponse {
 }
 
 interface GitHubAppProps {
-    onloaded: (vialJson: any, keyboardJson: any, keymapC: string) => void;
+    onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string) => void;
     oncommit: () => string;
 }
 
@@ -176,20 +177,22 @@ export function GitHubApp(props: GitHubAppProps) {
                     if (fileName === 'vial.json') foundFiles.vialJson = { name: fileName, path: file.path, type: 'file' };
                     if (fileName === 'keyboard.json') foundFiles.keyboardJson = { name: fileName, path: file.path, type: 'file' };
                     if (fileName === 'keymap.c') foundFiles.keymapC = { name: fileName, path: file.path, type: 'file' };
+                    if (fileName === 'config.h') foundFiles.configH = { name: fileName, path: file.path, type: 'file' };
                 }
             });
             
             setRequiredFiles(foundFiles);
 
-            if (foundFiles.vialJson && foundFiles.keyboardJson && foundFiles.keymapC) {
-                const [vialJson, keyboardJson, keymapC] = await Promise.all([
+            if (foundFiles.vialJson && foundFiles.keyboardJson && foundFiles.keymapC && foundFiles.configH) {
+                const [vialJson, keyboardJson, keymapC, configH] = await Promise.all([
                     loadJsonFile(owner, repo, branch, foundFiles.vialJson.path),
                     loadJsonFile(owner, repo, branch, foundFiles.keyboardJson.path),
-                    loadTextFile(owner, repo, branch, foundFiles.keymapC.path)
+                    loadTextFile(owner, repo, branch, foundFiles.keymapC.path),
+                    loadTextFile(owner, repo, branch, foundFiles.configH.path)
                 ]);
                 
-                if (vialJson && keyboardJson && keymapC) {
-                    props.onloaded(vialJson, keyboardJson, keymapC);
+                if (vialJson && keyboardJson && keymapC && configH) {
+                    props.onloaded(vialJson, keyboardJson, keymapC, configH);
                 }
             }
         } catch (error) {
@@ -376,10 +379,18 @@ export function GitHubApp(props: GitHubAppProps) {
                   >
                     keymap.c: {requiredFiles.keymapC?.path ?? "Not found"}
                   </Typography>
+                  <Typography
+                    color={
+                      requiredFiles.configH ? "success.main" : "error.main"
+                    }
+                  >
+                    config.h: {requiredFiles.configH?.path ?? "Not found"}
+                  </Typography>
                 </Stack>
               )}
               {/* コミットボタン */}
-              {requiredFiles.vialJson && requiredFiles.keyboardJson && requiredFiles.keymapC && (
+              {requiredFiles.vialJson && requiredFiles.keyboardJson && 
+               requiredFiles.keymapC && requiredFiles.configH && (
                 <Button
                   variant="contained"
                   color="primary"
