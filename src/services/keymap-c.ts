@@ -54,7 +54,7 @@ function parseTapDanceEntries(
     () => ({ ...defaultTapDanceEntry })
   );
 
-  // tap dance定義を探す
+// tap dance定義を探す
   const tdMatch = content.match(
     /const\s+vial_tap_dance_entry_t\s+(?:PROGMEM\s+)?default_tap_dance_entries\[\]\s*=\s*\{([\s\S]*?)\};/
   );
@@ -81,6 +81,143 @@ function parseTapDanceEntries(
   return entries;
 }
 
+// コメントを除去する関数
+function removeComments(content: string): string {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, "") // マルチラインコメントを除去
+    .replace(/\/\/.*/g, "");          // シングルラインコメントを除去
+}
+
+// ユーザーセクションを抽出する関数
+function extractUserSections(content: string): { userIncludes: string; userCode: string } {
+  let userIncludes = "";
+  let userCode = "";
+
+  const includeMatch = content.match(
+    /\/\* USER INCLUDE BEGIN \*\/([\s\S]*?)\/\* USER INCLUDE END \*\//
+  );
+  if (includeMatch) {
+    userIncludes = includeMatch[1].trim();
+  }
+
+  const codeMatch = content.match(
+    /\/\* USER CODE BEGIN \*\/([\s\S]*?)\/\* USER CODE END \*\//
+  );
+  if (codeMatch) {
+    userCode = codeMatch[1].trim();
+  }
+
+  return { userIncludes, userCode };
+}
+
+// キーマップレイヤーを解析する関数
+function parseLayer(
+  layerStr: string,
+  defaultLayout: { layout: { matrix: number[] }[] },
+  defaultLayoutName: string
+): KeymapLayer {
+  // LAYOUTマクロを探す
+  const layoutMatch = layerStr.match(/LAYOUT\S*\s*\(/);
+  if (!layoutMatch) {
+    return {
+      layout: defaultLayoutName,
+      keys: defaultLayout.layout.map((key) => ({
+        keycode: "KC_TRANSPARENT",
+        matrix: key.matrix,
+      })),
+    };
+  }
+
+  // LAYOUTマクロ名を取得（末尾の括弧を除去）
+  const layoutName = layoutMatch[0].trim().slice(0, -1);
+
+  // キーコードを抽出
+  const keycodesStartPos = layoutMatch.index! + layoutMatch[0].length;
+  const keycodesEndPos = findMatchingBracket(layerStr, keycodesStartPos - 1);
+  
+  if (keycodesEndPos === -1) {
+    throw new Error("Invalid LAYOUT macro");
+  }
+
+  const keycodes = layerStr
+    .slice(keycodesStartPos, keycodesEndPos)
+    .split(",")
+    .map((code) => code.replace(/[\\\n\r]/g, "").trim())
+    .filter((code) => code.length > 0);
+
+  // キーコードとマトリクス情報を紐付け
+  const keys: KeymapKey[] = defaultLayout.layout.map((key, index) => ({
+    keycode: keycodes[index] || "KC_TRANSPARENT",
+    matrix: key.matrix,
+  }));
+
+  return { layout: layoutName, keys };
+}
+
+// キーマップ全体を解析する関数
+function parseKeymap(
+  content: string,
+  dynamicLayerCount: number,
+  defaultLayout: { layout: { matrix: number[] }[] },
+  defaultLayoutName: string
+): KeymapLayer[] {
+  const layers: KeymapLayer[] = [];
+  
+  // keymaps配列の定義を探す
+  const keymapsMatch = content.match(
+    /const\s+uint16_t\s+PROGMEM\s+keymaps\[[\s\S]*?\]\s*=\s*\{([\s\S]*?)\};/
+  );
+
+  if (!keymapsMatch) {
+    // デフォルト値を生成
+    return Array(dynamicLayerCount).fill(null).map(() => ({
+      layout: defaultLayoutName,
+      keys: defaultLayout.layout.map((key) => ({
+        keycode: "KC_TRANSPARENT",
+        matrix: key.matrix,
+      })),
+    }));
+  }
+
+  const layersContent = keymapsMatch[1];
+  let currentPos = 0;
+
+  // 各レイヤーを解析
+  while (layers.length < dynamicLayerCount && currentPos < layersContent.length) {
+    const remainingContent = layersContent.slice(currentPos);
+    const layoutMatch = remainingContent.match(/LAYOUT\S*\s*\(/);
+    
+    if (!layoutMatch) break;
+
+    const layerStartPos = currentPos + layoutMatch.index!;
+    const layerEndPos = findMatchingBracket(
+      layersContent,
+      layerStartPos + layoutMatch[0].length - 1
+    );
+
+    if (layerEndPos === -1) break;
+
+    const layerStr = layersContent.slice(layerStartPos, layerEndPos + 1);
+    const layer = parseLayer(layerStr, defaultLayout, defaultLayoutName);
+    layers.push(layer);
+
+    currentPos = layerEndPos + 1;
+  }
+
+  // 不足分をデフォルト値で埋める
+  while (layers.length < dynamicLayerCount) {
+    layers.push({
+      layout: defaultLayoutName,
+      keys: defaultLayout.layout.map((key) => ({
+        keycode: "KC_TRANSPARENT",
+        matrix: key.matrix,
+      })),
+    });
+  }
+
+  return layers;
+}
+
 // C言語のkeymap.cファイルをパースしてQmkKeymapオブジェクトを生成
 export function parseKeymapC(
   content: string,
@@ -90,168 +227,27 @@ export function parseKeymapC(
   },
   configH: string
 ): QmkKeymap {
-  // キーマップ
-  const layers: KeymapLayer[] = [];
-
   // コメントを除去
-  content = content.replace(/\/\*[\s\S]*?\*\//g, "");
-  content = content.replace(/\/\/.*/g, "");
+  content = removeComments(content);
 
-  // keyboard.jsonのレイヤ定義
+  // 基本設定を取得
   const defaultLayoutName = Object.keys(keyboardJson.layouts)[0];
-  const defaultLayout = keyboardJson.layouts[defaultLayoutName]?.layout;
+  const defaultLayout = keyboardJson.layouts[defaultLayoutName];
   const dynamicLayerCount = keyboardJson.dynamic_keymap?.layer_count ?? 4;
-
-  // 各種設定値を取得
-  const dynamicComboCount = getConfigValue(configH, "VIAL_COMBO_ENTRIES") ?? 0;
-  const dynamicMacroCount = 32; // 常に32
-  const dynamicTapDanceCount =
-    getConfigValue(configH, "VIAL_TAP_DANCE_ENTRIES") ?? 0;
-  const dynamicOverrideCount =
-    getConfigValue(configH, "VIAL_KEY_OVERRIDE_ENTRIES") ?? 0;
-
 
   if (!defaultLayout) {
     throw new Error("No layout information found in keyboard.json");
   }
 
-  // keymaps配列の定義を探す
-  const keymapsMatch = content.match(
-    /const\s+uint16_t\s+PROGMEM\s+keymaps\[[\s\S]*?\]\s*=\\s*\{([\s\S]*?)\};/
-  );
+  // 各種動的エントリー数を取得
+  const dynamicComboCount = getConfigValue(configH, "VIAL_COMBO_ENTRIES") ?? 0;
+  const dynamicMacroCount = 32;
+  const dynamicTapDanceCount = getConfigValue(configH, "VIAL_TAP_DANCE_ENTRIES") ?? 0;
+  const dynamicOverrideCount = getConfigValue(configH, "VIAL_KEY_OVERRIDE_ENTRIES") ?? 0;
 
-  // ユーザーセクションを抽出
-  let userIncludes = "";
-  let userCode = "";
-  
-  if (keymapsMatch) {
-    const keymapsStart = content.indexOf(keymapsMatch[0]);
-    const beforeKeymaps = content.slice(0, keymapsStart);
-    const afterKeymaps = content.slice(keymapsStart + keymapsMatch[0].length);
-
-    // インクルード部分を抽出
-    const includeMatch = beforeKeymaps.match(
-      /\/\* USER INCLUDE BEGIN \*\/([\s\S]*?)\/\* USER INCLUDE END \*\//
-    );
-    if (includeMatch) {
-      userIncludes = includeMatch[1].trim();
-    }
-
-    // コード部分を抽出
-    const codeMatch = afterKeymaps.match(
-      /\/\* USER CODE BEGIN \*\/([\s\S]*?)\/\* USER CODE END \*\//
-    );
-    if (codeMatch) {
-      userCode = codeMatch[1].trim();
-    }
-  }
-
-  // キーマップが見つかっていなかったらデフォルト値を生成
-  if (!keymapsMatch) {
-    for (let i = 0; i < dynamicLayerCount; i++) {
-      layers.push({
-        layout: defaultLayoutName,
-        keys: defaultLayout.map((key) => ({
-          keycode: "KC_TRANSPARENT",
-          matrix: key.matrix,
-        })),
-      });
-    }
-
-    // Tap Dance Entriesの解析
-    const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
-
-    return {
-      version: 1,
-      author: "",
-      keyboard: "",
-      keymap: "default",
-      layout: layers[0]?.layout || defaultLayoutName,
-      layers,
-      dynamicLayerCount,
-      dynamicComboCount,
-      dynamicMacroCount,
-      dynamicOverrideCount,
-      tapDanceEntries,
-      userIncludes,
-      userCode,
-    };
-  }
-
-  // レイヤーごとに分割せずに全体を処理
-  const layersStr = keymapsMatch[1];
-
-  // レイヤー定義を探索
-  let currentPos = 0;
-  let currentLayer = 0;
-
-  while (currentLayer < dynamicLayerCount && currentPos < layersStr.length) {
-    // LAYOUTマクロを探す
-    const layoutMatch = layersStr.slice(currentPos).match(/LAYOUT\S*\s*\(/);
-    if (!layoutMatch) {
-      // 残りのレイヤーをデフォルト値で埋める
-      for (let i = currentLayer; i < dynamicLayerCount; i++) {
-        layers.push({
-          layout: defaultLayoutName,
-          keys: defaultLayout.map((key) => ({
-            keycode: "KC_TRANSPARENT",
-            matrix: key.matrix,
-          })),
-        });
-      }
-      break;
-    }
-
-    const layoutStartPos = currentPos + layoutMatch.index!;
-    const layoutEndPos = findMatchingBracket(
-      layersStr,
-      layoutStartPos + layoutMatch[0].length - 1
-    );
-    if (layoutEndPos === -1) {
-      throw new Error(`Invalid LAYOUT macro at layer ${currentLayer}`);
-    }
-
-    // LAYOUTマクロ名を取得
-    const layoutName = layoutMatch[0].trim().slice(0, -1); // 末尾の(を除去
-
-    // キーコードを抽出
-    const keycodesStr = layersStr.slice(
-      layoutStartPos + layoutMatch[0].length,
-      layoutEndPos
-    );
-    const keycodes = keycodesStr
-      .split(",")
-      .map(
-        (code) =>
-          code
-            .replace(/\\/g, "") // エスケープ文字を除去
-            .replace(/\n/g, "") // 改行を除去
-            .replace(/\r/g, "") // 改行を除去
-            .trim()
-      )
-      .filter((code) => code.length > 0);
-
-    // レイアウト情報を取得
-    const layoutInfo =
-      keyboardJson.layouts[layoutName] ||
-      keyboardJson.layouts[defaultLayoutName];
-
-    // キーコードとマトリクス情報を紐付け
-    const keys: KeymapKey[] = layoutInfo.layout.map((key, index) => ({
-      keycode: keycodes[index] || "KC_TRANSPARENT",
-      matrix: key.matrix,
-    }));
-
-    layers.push({
-      layout: layoutName,
-      keys,
-    });
-
-    currentPos = layoutEndPos + 1;
-    currentLayer++;
-  }
-
-  // Tap Dance Entriesの解析
+  // 各セクションを解析
+  const { userIncludes, userCode } = extractUserSections(content);
+  const layers = parseKeymap(content, dynamicLayerCount, defaultLayout, defaultLayoutName);
   const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
 
   return {
@@ -259,7 +255,7 @@ export function parseKeymapC(
     author: "",
     keyboard: "",
     keymap: "default",
-    layout: layers[0]?.layout || defaultLayoutName,
+    layout: defaultLayoutName,
     layers,
     dynamicLayerCount,
     dynamicComboCount,
