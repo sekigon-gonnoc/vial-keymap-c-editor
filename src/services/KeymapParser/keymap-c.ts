@@ -1,5 +1,6 @@
-import { generateComboEntries, parseComboEntries } from "./comboParser";
-import { generateTapDanceEntries, parseTapDanceEntries } from "./tapDanceParser";
+import { ComboEntry, generateComboEntries, parseComboEntries } from "./comboParser";
+import { generateMacroEntries, MacroEntry, parseMacroEntries } from "./macroParser";
+import { generateTapDanceEntries, parseTapDanceEntries, TapDanceEntry } from "./tapDanceParser";
 
 export interface KeymapKey {
     keycode: string;  // キーコード (例: "KC_A")
@@ -10,10 +11,6 @@ export interface KeymapLayer {
     name?: string;
     layout: string;  // LAYOUTマクロの名前
     keys: KeymapKey[];  // キーコードとマトリクス情報
-}
-
-export interface MacroEntry {
-    data: number[];  // マクロのバイトデータ
 }
 
 export interface QmkKeymap {
@@ -34,48 +31,6 @@ export interface QmkKeymap {
     userCode?: string;      // ユーザー定義コード部分
 }
 
-
-
-// Macroマクロの解析
-function parseMacroEntries(
-  content: string,
-  entryCount: number
-): MacroEntry[] {
-  const defaultMacroEntry: MacroEntry = {
-    data: [],
-  };
-  const entries: MacroEntry[] = Array.from(
-    { length: entryCount },
-    () => ({ ...defaultMacroEntry })
-  );
-
-  // macro定義を探す
-  const macroMatch = content.match(
-    /const\s+vial_macro_entry_t\s+(?:PROGMEM\s+)?default_macro_entries\[\]\s*=\s*\{([\s\S]*?)\};/
-  );
-  if (!macroMatch) return entries;
-
-  // MACRO_ENTRYマクロを探す
-  const entryRegex = /MACRO_ENTRY\s*\(\s*([^)]+)\s*\)/g;
-  const entriesStr = macroMatch[1];
-
-  let match;
-  let index = 0;
-  while ((match = entryRegex.exec(entriesStr)) !== null && index < entryCount) {
-    // カンマ区切りの数値配列を解析
-    const dataStr = match[1].trim();
-    const data = dataStr.split(',')
-      .map(s => parseInt(s.trim()))
-      .filter(n => !isNaN(n));
-    
-    entries[index] = {
-      data: data,
-    };
-    index++;
-  }
-
-  return entries;
-}
 
 // コメントを除去する関数
 function removeComments(content: string): string {
@@ -313,8 +268,8 @@ export function generateKeymapC(keymap: QmkKeymap): string {
         // キーコードを4つごとに改行を入れて整形
         for (let i = 0; i < layer.keys.length; i += 4) {
             output += '        ' + layer.keys.slice(i, i + 4)
-                .map(key => key.keycode)
-                .join(', ');
+              .map(key => key.keycode.padStart(15))
+              .join(', ');
             if (i + 4 < layer.keys.length) {
                 output += ',';
             }
@@ -337,23 +292,7 @@ export function generateKeymapC(keymap: QmkKeymap): string {
     output += generateComboEntries(keymap.comboEntries);
 
     // Macro定義の生成
-    if (keymap.macroEntries && keymap.macroEntries.length > 0) {
-        output += "\n// Macro definitions\n";
-        output += `#define MACRO_ENTRY(data...) ((vial_macro_entry_t){.data = {data}})\n`;
-        output += `#if VIAL_MACRO_ENTRIES > 0\n`;
-        output += "const vial_macro_entry_t default_macro_entries[] = {\n";
-        keymap.macroEntries.forEach((entry, index) => {
-            if (entry.data.length > 0) {
-                output += `    MACRO_ENTRY(${entry.data.join(', ')})`;
-                if (index < keymap.macroEntries.length - 1) {
-                    output += ",";
-                }
-                output += "\n";
-            }
-        });
-        output += "};\n";
-        output += `#endif\n`;
-    }
+    output +=  generateMacroEntries(keymap.macroEntries);
 
     // ユーザーコード部分
         output += "\n/* USER CODE BEGIN */\n";

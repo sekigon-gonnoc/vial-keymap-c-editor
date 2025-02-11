@@ -179,8 +179,8 @@ export class KeycodeConverter {
           return {
             group: "tapdance",
             value: keycode_range.QK_TAP_DANCE.start + idx,
-            key: `TAP_DANCE_${idx}`,
-            label: `TD${idx}`,
+            label: `TAP_DANCE_${idx}`,
+            key: `TD${idx}`,
           };
         }),
       );
@@ -192,8 +192,8 @@ export class KeycodeConverter {
           return {
             group: "layer",
             value: keycode_range.QK_TO.start + idx,
-            key: `To Layer ${idx}`,
-            label: `TO${idx}`,
+            label: `To Layer ${idx}`,
+            key: `TO${idx}`,
           };
         }),
       );
@@ -202,8 +202,8 @@ export class KeycodeConverter {
           return {
             group: "layer",
             value: keycode_range.QK_MOMENTARY.start + idx,
-            key: `Momentary Layer ${idx}`,
-            label: `MO(${idx})`,
+            label: `Momentary Layer ${idx}`,
+            key: `MO(${idx})`,
           };
         }),
       );
@@ -212,8 +212,8 @@ export class KeycodeConverter {
           return {
             group: "layer",
             value: keycode_range.QK_DEF_LAYER.start + idx,
-            key: `Default Layer ${idx}`,
-            label: `DF(${idx})`,
+            label: `Default Layer ${idx}`,
+            key: `DF(${idx})`,
           };
         }),
       );
@@ -222,8 +222,8 @@ export class KeycodeConverter {
           return {
             group: "layer",
             value: keycode_range.QK_TOGGLE_LAYER.start + idx,
-            key: `Toggle Layer ${idx}`,
-            label: `TG(${idx})`,
+            label: `Toggle Layer ${idx}`,
+            key: `TG(${idx})`,
           };
         }),
       );
@@ -232,8 +232,8 @@ export class KeycodeConverter {
           return {
             group: "layer",
             value: keycode_range.QK_ONE_SHOT_LAYER.start + idx,
-            key: `Oneshot Layer ${idx}`,
-            label: `OSL(${idx})`,
+            label: `Oneshot Layer ${idx}`,
+            key: `OSL(${idx})`,
           };
         }),
       );
@@ -243,8 +243,8 @@ export class KeycodeConverter {
         return {
           group: "layer",
           value: keycode_range.QK_LAYER_MOD.start + (layer << 5),
-          key: `Layer Mod(${layer}, mod)`,
-          label: `LM(${layer})`,
+          label: `Layer Mod(${layer}, mod)`,
+          key: `LM(${layer})`,
         };
       }),
     );
@@ -445,8 +445,8 @@ export class KeycodeConverter {
         (val) => {
           return {
             value: val,
-            key: `Momentary Layer(${val & 0x1f})`,
-            label: `MO(${val & 0x1f})`,
+            key: `MO(${val & 0x1f})`,
+            label: `Momentary Layer(${val & 0x1f})`,
           };
         }
       )
