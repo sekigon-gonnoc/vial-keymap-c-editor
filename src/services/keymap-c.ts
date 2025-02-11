@@ -11,6 +11,14 @@ export interface KeymapLayer {
     keys: KeymapKey[];  // キーコードとマトリクス情報
 }
 
+export interface TapDanceEntry {
+    onTap: string;
+    onHold: string;
+    onDoubleTap: string;
+    onTapHold: string;
+    tappingTerm: number;
+}
+
 export interface QmkKeymap {
     version: number;
     author: string;
@@ -22,11 +30,55 @@ export interface QmkKeymap {
     layers: KeymapLayer[];
     dynamicLayerCount: number;
     dynamicMacroCount: number;
-    dynamicTapDanceCount: number;
+    tapDanceEntries: TapDanceEntry[];
     dynamicComboCount: number;
     dynamicOverrideCount: number;
     userIncludes?: string;  // ユーザー定義インクルード部分
     userCode?: string;      // ユーザー定義コード部分
+}
+
+// TAPDANCEマクロの解析
+function parseTapDanceEntries(
+  content: string,
+  entryCount: number
+): TapDanceEntry[] {
+  const defaultTapDanceEntry: TapDanceEntry = {
+    onTap: "KC_NO",
+    onHold: "KC_NO",
+    onDoubleTap: "KC_NO",
+    onTapHold: "KC_NO",
+    tappingTerm: 200,
+  };
+  const entries: TapDanceEntry[] = Array.from(
+    { length: entryCount },
+    () => ({ ...defaultTapDanceEntry })
+  );
+
+  // tap dance定義を探す
+  const tdMatch = content.match(
+    /const\s+vial_tap_dance_entry_t\s+(?:PROGMEM\s+)?default_tap_dance_entries\[\]\s*=\s*\{([\s\S]*?)\};/
+  );
+  if (!tdMatch) return entries;
+
+  // TAP_DANCE_ENTRYマクロを探す
+  const entryRegex =
+    /TAP_DANCE_ENTRY\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*(\d+)\s*\)/g;
+  const entriesStr = tdMatch[1];
+
+  let match;
+  let index = 0;
+  while ((match = entryRegex.exec(entriesStr)) !== null && index < entryCount) {
+    entries[index] = {
+      onTap: match[1].trim(),
+      onHold: match[2].trim(),
+      onDoubleTap: match[3].trim(),
+      onTapHold: match[4].trim(),
+      tappingTerm: parseInt(match[5]),
+    };
+    index++;
+  }
+
+  return entries;
 }
 
 // C言語のkeymap.cファイルをパースしてQmkKeymapオブジェクトを生成
@@ -65,7 +117,7 @@ export function parseKeymapC(
 
   // keymaps配列の定義を探す
   const keymapsMatch = content.match(
-    /const\s+uint16_t\s+PROGMEM\s+keymaps\[[\s\S]*?\]\s*=\s*\{([\s\S]*?)\};/
+    /const\s+uint16_t\s+PROGMEM\s+keymaps\[[\s\S]*?\]\s*=\\s*\{([\s\S]*?)\};/
   );
 
   // ユーザーセクションを抽出
@@ -106,6 +158,9 @@ export function parseKeymapC(
       });
     }
 
+    // Tap Dance Entriesの解析
+    const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
+
     return {
       version: 1,
       author: "",
@@ -116,8 +171,8 @@ export function parseKeymapC(
       dynamicLayerCount,
       dynamicComboCount,
       dynamicMacroCount,
-      dynamicTapDanceCount,
       dynamicOverrideCount,
+      tapDanceEntries,
       userIncludes,
       userCode,
     };
@@ -196,6 +251,9 @@ export function parseKeymapC(
     currentLayer++;
   }
 
+  // Tap Dance Entriesの解析
+  const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
+
   return {
     version: 1,
     author: "",
@@ -206,8 +264,8 @@ export function parseKeymapC(
     dynamicLayerCount,
     dynamicComboCount,
     dynamicMacroCount,
-    dynamicTapDanceCount,
     dynamicOverrideCount,
+    tapDanceEntries,
     userIncludes,
     userCode,
   };
@@ -277,6 +335,23 @@ export function generateKeymapC(keymap: QmkKeymap): string {
     });
 
     output += '};\n';
+
+    // Tap Dance定義の生成
+    if (keymap.tapDanceEntries && keymap.tapDanceEntries.length > 0) {
+        output += "\n// Tap Dance definitions\n";
+        output += `#define TAP_DANCE_ENTRY(onTap, onHold, onDoubleTap, onTapHold, tappingTerm) ((vial_tap_dance_entry_t){.on_tap = onTap, .on_hold = onHold, .on_double_tap = onDoubleTap, .on_tap_hold = onTapHold, .custom_tapping_term = tappingTerm})\n`;
+        output += `#if VIAL_TAP_DANCE_ENTRIES > 0\n`;
+        output += "const vial_tap_dance_entry_t default_tap_dance_entries[] = {\n";
+        keymap.tapDanceEntries.forEach((entry, index) => {
+            output += `    TAP_DANCE_ENTRY(${entry.onTap}, ${entry.onHold}, ${entry.onDoubleTap}, ${entry.onTapHold}, ${entry.tappingTerm})`;
+            if (index < keymap.tapDanceEntries.length - 1) {
+                output += ",";
+            }
+            output += "\n";
+        });
+        output += "};\n";
+        output += `#endif\n`;
+    }
 
     // ユーザーコード部分
         output += "\n/* USER CODE BEGIN */\n";

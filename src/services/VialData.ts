@@ -13,7 +13,7 @@ export class VialData implements IVialData {
   private qmkKeycodes: { [key: string]: QmkKeycode } = {};
   private keycodeConverter: KeycodeConverter;
 
-  get keymap() {    
+  get keymap() {
     return this._keymap;
   }
 
@@ -67,7 +67,7 @@ export class VialData implements IVialData {
       keycode: this.qmkKeycodes[key.keycode] ?? DefaultQmkKeycode,
       matrix: key.matrix,
     }));
-    const result : number[]= new Array(
+    const result: number[] = new Array(
       matrix_definition.rows * matrix_definition.cols
     ).fill(0);
     keymap.forEach((key) => {
@@ -132,11 +132,21 @@ export class VialData implements IVialData {
     combo: number;
     override: number;
   }> {
-    return { tapdance: 0, combo: 0, override: 0 };
+    return {
+      tapdance: this.keymap.tapDanceEntries.length,
+      combo: this.keymap.dynamicComboCount,
+      override: this.keymap.dynamicOverrideCount,
+    };
   }
 
   async GetDynamicEntryCountAll(): Promise<DynamicEntryCount> {
-    return { layer: 0, macro: 0, tapdance: 0, combo: 0, override: 0 };
+    return {
+      layer: this.keymap.dynamicLayerCount,
+      macro: this.keymap.dynamicMacroCount,
+      tapdance: this.keymap.tapDanceEntries.length,
+      combo: this.keymap.dynamicComboCount,
+      override: this.keymap.dynamicOverrideCount,
+    };
   }
 
   async GetTapDance(ids: number[]): Promise<
@@ -148,13 +158,25 @@ export class VialData implements IVialData {
       tappingTerm: number;
     }[]
   > {
-    return ids.map(() => ({
-      onTap: 0,
-      onHold: 0,
-      onDoubleTap: 0,
-      onTapHold: 0,
-      tappingTerm: 0,
-    }));
+    return ids.map((id) => {
+      const entry = this._keymap.tapDanceEntries[id];
+      if (!entry) {
+        return {
+          onTap: 0,
+          onHold: 0,
+          onDoubleTap: 0,
+          onTapHold: 0,
+          tappingTerm: 0,
+        };
+      }
+      return {
+        onTap: this.qmkKeycodes[entry.onTap]?.value ?? 0,
+        onHold: this.qmkKeycodes[entry.onHold]?.value ?? 0,
+        onDoubleTap: this.qmkKeycodes[entry.onDoubleTap]?.value ?? 0,
+        onTapHold: this.qmkKeycodes[entry.onTapHold]?.value ?? 0,
+        tappingTerm: entry.tappingTerm,
+      };
+    });
   }
 
   async SetTapDance(
@@ -166,7 +188,17 @@ export class VialData implements IVialData {
       onTapHold: number;
       tappingTerm: number;
     }[]
-  ): Promise<void> {}
+  ): Promise<void> {
+    values.forEach((value) => {
+      this._keymap.tapDanceEntries[value.id] = {
+        onTap: this.keycodeConverter.convertIntToKeycode(value.onTap).key,
+        onHold: this.keycodeConverter.convertIntToKeycode(value.onHold).key,
+        onDoubleTap: this.keycodeConverter.convertIntToKeycode(value.onDoubleTap).key,
+        onTapHold: this.keycodeConverter.convertIntToKeycode(value.onTapHold).key,
+        tappingTerm: value.tappingTerm,
+      };
+    });
+  }
 
   async GetMacroCount(): Promise<number> {
     return 0;
