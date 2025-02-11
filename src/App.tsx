@@ -23,7 +23,7 @@ function App() {
             newKeymapC,
             newKeymapC.layers.length
           );
-          await newVialData.initKeycodeTable();
+          await newVialData.initKeycodeTable(vialJson.customKeycodes);
           setVialData(newVialData);
         }}
         oncommit={() => generateKeymapC(vialData.keymap)}
