@@ -2,7 +2,7 @@ import { useState } from "react";
 import { GitHubApp } from "./components/GitHubApp";
 import { KeymapEditor } from "./components/KeymapEditor"
 import { VialData } from "./services/VialData";
-import { generateKeymapC, parseKeymapC, QmkKeymap } from "./services/keymap-c";
+import { generateKeymapC, parseKeymapC, QmkKeymap } from "./services/KeymapParser/keymap-c";
 
 function App() {
   const [vialJson, setVialJson] = useState<any>(undefined);

@@ -1,3 +1,6 @@
+import { generateComboEntries, parseComboEntries } from "./comboParser";
+import { generateTapDanceEntries, parseTapDanceEntries } from "./tapDanceParser";
+
 export interface KeymapKey {
     keycode: string;  // キーコード (例: "KC_A")
     matrix: number[];  // [row, col]のマトリクス座標
@@ -7,22 +10,6 @@ export interface KeymapLayer {
     name?: string;
     layout: string;  // LAYOUTマクロの名前
     keys: KeymapKey[];  // キーコードとマトリクス情報
-}
-
-export interface TapDanceEntry {
-    onTap: string;
-    onHold: string;
-    onDoubleTap: string;
-    onTapHold: string;
-    tappingTerm: number;
-}
-
-export interface ComboEntry {
-    key1: string;
-    key2: string;
-    key3: string;
-    key4: string;
-    output: string;
 }
 
 export interface MacroEntry {
@@ -47,93 +34,7 @@ export interface QmkKeymap {
     userCode?: string;      // ユーザー定義コード部分
 }
 
-// TAPDANCEマクロの解析
-function parseTapDanceEntries(
-  content: string,
-  entryCount: number
-): TapDanceEntry[] {
-  const defaultTapDanceEntry: TapDanceEntry = {
-    onTap: "KC_NO",
-    onHold: "KC_NO",
-    onDoubleTap: "KC_NO",
-    onTapHold: "KC_NO",
-    tappingTerm: 200,
-  };
-  const entries: TapDanceEntry[] = Array.from(
-    { length: entryCount },
-    () => ({ ...defaultTapDanceEntry })
-  );
 
-// tap dance定義を探す
-  const tdMatch = content.match(
-    /const\s+vial_tap_dance_entry_t\s+(?:PROGMEM\s+)?default_tap_dance_entries\[\]\s*=\s*\{([\s\S]*?)\};/
-  );
-  if (!tdMatch) return entries;
-
-  // TAP_DANCE_ENTRYマクロを探す
-  const entryRegex =
-    /TAP_DANCE_ENTRY\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*(\d+)\s*\)/g;
-  const entriesStr = tdMatch[1];
-
-  let match;
-  let index = 0;
-  while ((match = entryRegex.exec(entriesStr)) !== null && index < entryCount) {
-    entries[index] = {
-      onTap: match[1].trim(),
-      onHold: match[2].trim(),
-      onDoubleTap: match[3].trim(),
-      onTapHold: match[4].trim(),
-      tappingTerm: parseInt(match[5]),
-    };
-    index++;
-  }
-
-  return entries;
-}
-
-// Comboマクロの解析
-function parseComboEntries(
-  content: string,
-  entryCount: number
-): ComboEntry[] {
-  const defaultComboEntry: ComboEntry = {
-    key1: "KC_NO",
-    key2: "KC_NO",
-    key3: "KC_NO",
-    key4: "KC_NO",
-    output: "KC_NO",
-  };
-  const entries: ComboEntry[] = Array.from(
-    { length: entryCount },
-    () => ({ ...defaultComboEntry })
-  );
-
-  // combo定義を探す
-  const comboMatch = content.match(
-    /const\s+vial_combo_entry_t\s+(?:PROGMEM\s+)?default_combo_entries\[\]\s*=\s*\{([\s\S]*?)\};/
-  );
-  if (!comboMatch) return entries;
-
-  // COMBO_ENTRYマクロを探す
-  const entryRegex =
-    /COMBO_ENTRY\s*\(\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*\)/g;
-  const entriesStr = comboMatch[1];
-
-  let match;
-  let index = 0;
-  while ((match = entryRegex.exec(entriesStr)) !== null && index < entryCount) {
-    entries[index] = {
-      key1: match[1].trim(),
-      key2: match[2].trim(),
-      key3: match[3].trim(),
-      key4: match[4].trim(),
-      output: match[5].trim(),
-    };
-    index++;
-  }
-
-  return entries;
-}
 
 // Macroマクロの解析
 function parseMacroEntries(
@@ -430,38 +331,10 @@ export function generateKeymapC(keymap: QmkKeymap): string {
     output += '};\n';
 
     // Tap Dance定義の生成
-    if (keymap.tapDanceEntries && keymap.tapDanceEntries.length > 0) {
-        output += "\n// Tap Dance definitions\n";
-        output += `#define TAP_DANCE_ENTRY(onTap, onHold, onDoubleTap, onTapHold, tappingTerm) ((vial_tap_dance_entry_t){.on_tap = onTap, .on_hold = onHold, .on_double_tap = onDoubleTap, .on_tap_hold = onTapHold, .custom_tapping_term = tappingTerm})\n`;
-        output += `#if VIAL_TAP_DANCE_ENTRIES > 0\n`;
-        output += "const vial_tap_dance_entry_t default_tap_dance_entries[] = {\n";
-        keymap.tapDanceEntries.forEach((entry, index) => {
-            output += `    TAP_DANCE_ENTRY(${entry.onTap}, ${entry.onHold}, ${entry.onDoubleTap}, ${entry.onTapHold}, ${entry.tappingTerm})`;
-            if (index < keymap.tapDanceEntries.length - 1) {
-                output += ",";
-            }
-            output += "\n";
-        });
-        output += "};\n";
-        output += `#endif\n`;
-    }
+    output += generateTapDanceEntries(keymap.tapDanceEntries);
 
     // Combo定義の生成
-    if (keymap.comboEntries && keymap.comboEntries.length > 0) {
-        output += "\n// Combo definitions\n";
-        output += `#define COMBO_ENTRY(k1, k2, k3, k4, result) ((vial_combo_entry_t){.input ={k1, k2, k3, k4}, .output = result})\n`;
-        output += `#if VIAL_COMBO_ENTRIES > 0\n`;
-        output += "const vial_combo_entry_t default_combo_entries[] = {\n";
-        keymap.comboEntries.forEach((entry, index) => {
-            output += `    COMBO_ENTRY(${entry.key1}, ${entry.key2}, ${entry.key3}, ${entry.key4}, ${entry.output})`;
-            if (index < keymap.comboEntries.length - 1) {
-                output += ",";
-            }
-            output += "\n";
-        });
-        output += "};\n";
-        output += `#endif\n`;
-    }
+    output += generateComboEntries(keymap.comboEntries);
 
     // Macro定義の生成
     if (keymap.macroEntries && keymap.macroEntries.length > 0) {
