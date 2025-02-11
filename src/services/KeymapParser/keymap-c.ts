@@ -178,6 +178,9 @@ export function parseKeymapC(
   },
   configH: string
 ): QmkKeymap {
+  // ユーザーセクションを抽出
+  const { userIncludes, userCode } = extractUserSections(content);
+
   // コメントを除去
   content = removeComments(content);
 
@@ -197,7 +200,6 @@ export function parseKeymapC(
   const dynamicOverrideCount = getConfigValue(configH, "VIAL_KEY_OVERRIDE_ENTRIES") ?? 0;
 
   // 各セクションを解析
-  const { userIncludes, userCode } = extractUserSections(content);
   const layers = parseKeymap(content, dynamicLayerCount, defaultLayout, defaultLayoutName);
   const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
   const comboEntries = parseComboEntries(content, dynamicComboCount);
