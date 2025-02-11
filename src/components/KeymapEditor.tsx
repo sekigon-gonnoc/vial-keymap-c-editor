@@ -213,7 +213,11 @@ export function KeymapKeyPopUp(props: {
       touchEvent="onTouchStart"
       onClickAway={() => props.onClickAway?.()}
     >
-      <Popper open={props.open} anchorEl={props.anchor} placement="bottom-start">
+      <Popper
+        open={props.open}
+        anchorEl={props.anchor}
+        placement="bottom-start"
+      >
         <div className="key-select-popup">
           <Autocomplete
             value={tapValue}
@@ -224,7 +228,7 @@ export function KeymapKeyPopUp(props: {
                 props.keycodeconverter.combineKeycodes(
                   newValue ?? DefaultQmkKeycode,
                   holdValue,
-                  modsValue,
+                  modsValue
                 ) ?? DefaultQmkKeycode;
               setKeycodeValue(newKeycode.value.toString());
               props.onChange?.({
@@ -242,9 +246,11 @@ export function KeymapKeyPopUp(props: {
             }}
             getOptionKey={(option) => option.key}
             getOptionLabel={(option) => option.label}
-            renderInput={(params) => <TextField {...params} label="Base(Tap)" />}
+            renderInput={(params) => (
+              <TextField {...params} label="Base(Tap)" />
+            )}
             renderOption={(props, option) => (
-              <Box component="li" {...props}>
+              <Box component="li" {...props} key={props.key}>
                 <div className="list-label">{option.label}</div>
                 <div className="list-key">{option.key}</div>
               </Box>
@@ -260,7 +266,7 @@ export function KeymapKeyPopUp(props: {
                 props.keycodeconverter.combineKeycodes(
                   tapValue,
                   newValue ?? DefaultQmkKeycode,
-                  modsValue,
+                  modsValue
                 ) ?? DefaultQmkKeycode;
               setKeycodeValue(newKeycode.value.toString());
               props.onChange?.({
@@ -278,9 +284,11 @@ export function KeymapKeyPopUp(props: {
             }}
             getOptionKey={(option) => option.key}
             getOptionLabel={(option) => option.label}
-            renderInput={(params) => <TextField {...params} label="Option(Hold)" />}
+            renderInput={(params) => (
+              <TextField {...params} label="Option(Hold)" />
+            )}
             renderOption={(props, option) => (
-              <Box component="li" {...props}>
+              <Box component="li" {...props} key={props.key}>
                 <div className="list-label">{option.label}</div>
                 <div className="list-key">{option.key}</div>
               </Box>
@@ -310,8 +318,11 @@ export function KeymapKeyPopUp(props: {
                       console.log(`new mods ${newMods}`);
                       setModsValue(newMods);
                       const newKeycode =
-                        props.keycodeconverter.combineKeycodes(tapValue, holdValue, newMods) ??
-                        DefaultQmkKeycode;
+                        props.keycodeconverter.combineKeycodes(
+                          tapValue,
+                          holdValue,
+                          newMods
+                        ) ?? DefaultQmkKeycode;
                       setKeycodeValue(newKeycode.value.toString());
                       props.onChange?.({
                         keymapkey: props.keymapKey,
@@ -334,15 +345,21 @@ export function KeymapKeyPopUp(props: {
               setKeycodeValue(event.target.value);
               const keycodeValue = parseInt(event.target.value);
               if (0 <= keycodeValue && keycodeValue <= 0xffff) {
-                const keycode = props.keycodeconverter.convertIntToKeycode(keycodeValue);
+                const keycode =
+                  props.keycodeconverter.convertIntToKeycode(keycodeValue);
                 setTapValue(props.keycodeconverter.getTapKeycode(keycode));
-                setTapInputValue(props.keycodeconverter.getTapKeycode(keycode).label);
+                setTapInputValue(
+                  props.keycodeconverter.getTapKeycode(keycode).label
+                );
                 setHoldValue(props.keycodeconverter.getHoldKeycode(keycode));
-                setHoldInputValue(props.keycodeconverter.getHoldKeycode(keycode).label);
+                setHoldInputValue(
+                  props.keycodeconverter.getHoldKeycode(keycode).label
+                );
                 setModsValue(props.keycodeconverter.getModifier(keycode));
                 props.onChange?.({
                   keymapkey: props.keymapKey,
-                  keycode: props.keycodeconverter.convertIntToKeycode(keycodeValue),
+                  keycode:
+                    props.keycodeconverter.convertIntToKeycode(keycodeValue),
                 });
               }
             }}
