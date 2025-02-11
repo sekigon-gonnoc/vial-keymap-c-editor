@@ -325,6 +325,16 @@ export function GitHubApp(props: GitHubAppProps) {
                     variant="outlined"
                     color="primary"
                     onClick={() =>
+                      window.open(`https://github.com/${selectedRepo}`, '_blank')
+                    }
+                    disabled={!selectedRepo}
+                  >
+                    Open Repository
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() =>
                       (window.location.href =
                         "https://github.com/apps/vial-keymap-c-editor/installations/new")
                     }
