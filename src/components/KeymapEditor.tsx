@@ -762,7 +762,8 @@ export function KeymapEditor(props: {
           }}
         ></TapDanceEditor>
       </Box>
-      <Box hidden={menuType !== "macro"}>
+      {/* TODO: macro */}
+      {/* <Box hidden={menuType !== "macro"}>
         <MacroEditor
           via={props.via}
           keycodeConverter={keycodeConverter}
@@ -772,7 +773,7 @@ export function KeymapEditor(props: {
             setMenuType("layer");
           }}
         ></MacroEditor>
-      </Box>
+      </Box> */}
       <Box hidden={menuType !== "combo"}>
         <ComboEditor
           via={props.via}
@@ -784,7 +785,8 @@ export function KeymapEditor(props: {
           }}
         ></ComboEditor>
       </Box>
-      <Box hidden={menuType !== "override"}>
+      {/* TODO: override */}
+      {/* <Box hidden={menuType !== "override"}>
         <OverrideEditor
           via={props.via}
           keycodeConverter={keycodeConverter}
@@ -794,7 +796,7 @@ export function KeymapEditor(props: {
             setMenuType("layer");
           }}
         ></OverrideEditor>
-      </Box>
+      </Box> */}
       <Box>
         <LanguageSelector
           languageList={["US", "Japanese"]}
@@ -811,9 +813,12 @@ export function KeymapEditor(props: {
           { label: "Media", keygroup: ["media"] },
           { label: "Quantum", keygroup: ["quantum"] },
           { label: "Layer", keygroup: ["layer"] },
-          { label: "Macro", keygroup: ["macro"] },
+          // TODO: macro
+          // { label: "Macro", keygroup: ["macro"] },
           { label: "TapDance", keygroup: ["tapdance"] },
-          { label: "Combo/Override", keygroup: ["combo", "keyoverride"] },
+          // TODO: override
+          // { label: "Combo/Override", keygroup: ["combo", "keyoverride"] },
+          { label: "Combo", keygroup: ["combo"] },
         ]}
         comboCount={props.dynamicEntryCount.combo}
         overrideCount={props.dynamicEntryCount.override}

@@ -192,7 +192,7 @@ export function parseKeymapC(
 
   // 各種動的エントリー数を取得
   const dynamicComboCount = getConfigValue(configH, "VIAL_COMBO_ENTRIES") ?? 0;
-  const dynamicMacroCount = 32;
+  // const dynamicMacroCount = 32;
   const dynamicTapDanceCount = getConfigValue(configH, "VIAL_TAP_DANCE_ENTRIES") ?? 0;
   const dynamicOverrideCount = getConfigValue(configH, "VIAL_KEY_OVERRIDE_ENTRIES") ?? 0;
 
@@ -201,7 +201,8 @@ export function parseKeymapC(
   const layers = parseKeymap(content, dynamicLayerCount, defaultLayout, defaultLayoutName);
   const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
   const comboEntries = parseComboEntries(content, dynamicComboCount);
-  const macroEntries = parseMacroEntries(content, dynamicMacroCount);
+  // const macroEntries = parseMacroEntries(content, dynamicMacroCount);
+  const macroEntries: MacroEntry[] = [];
 
   return {
     version: 1,
@@ -291,8 +292,9 @@ export function generateKeymapC(keymap: QmkKeymap): string {
     // Combo定義の生成
     output += generateComboEntries(keymap.comboEntries);
 
-    // Macro定義の生成
-    output +=  generateMacroEntries(keymap.macroEntries);
+    // TODO: macro
+    // // Macro定義の生成
+    // output +=  generateMacroEntries(keymap.macroEntries);
 
     // ユーザーコード部分
         output += "\n/* USER CODE BEGIN */\n";
