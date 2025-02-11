@@ -207,75 +207,95 @@ export function GitHubApp(props: GitHubAppProps) {
     // ログイン済みの場合のUI
     if (avatarUrl) {
         return (
-            <Container>
-                <Stack spacing={2}>
-                    {/* ヘッダー部分: アバター、リポジトリ選択、ブランチ選択、ログアウトボタン */}
-                    <Stack direction="row" spacing={2} alignItems="center">
-                        <img src={avatarUrl} alt="GitHub avatar" style={{ width: 40, height: 40, borderRadius: '50%' }} />
-                        <FormControl sx={{ minWidth: 200 }}>
-                            <InputLabel>Repository</InputLabel>
-                            <Select
-                                value={selectedRepo}
-                                label="Repository"
-                                onChange={(e) => handleRepoChange(e.target.value)}
-                            >
-                                {repos.map((repo) => (
-                                    <MenuItem key={repo.id} value={repo.full_name}>
-                                        {repo.full_name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        {selectedRepo && (
-                            <FormControl sx={{ minWidth: 150 }}>
-                                <InputLabel>Branch</InputLabel>
-                                <Select
-                                    value={selectedBranch}
-                                    label="Branch"
-                                    onChange={(e) => handleBranchChange(e.target.value)}
-                                >
-                                    {branches.map((branch) => (
-                                        <MenuItem key={branch.commit.sha} value={branch.name}>
-                                            {branch.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        )}
-                        <Stack direction="row" spacing={1}>
-                            <Button
-                                variant="outlined"
-                                color="primary"
-                                onClick={() => window.location.href = 'https://github.com/apps/vial-keymap-c-editor/installations/new'}
-                            >
-                                Add Repository
-                            </Button>
-                            <Button 
-                                variant="outlined"
-                                color="error"
-                                onClick={handleLogout}
-                            >
-                                Logout
-                            </Button>
-                        </Stack>
-                    </Stack>
-                    {/* ブランチ選択後に必要なファイルの有無を表示 */}
-                    {selectedBranch && (
-                        <Stack spacing={1}>
-                            <Typography>Required files status:</Typography>
-                            <Typography color={requiredFiles.vialJson ? 'success.main' : 'error.main'}>
-                                vial.json: {requiredFiles.vialJson ? 'Found' : 'Not found'}
-                            </Typography>
-                            <Typography color={requiredFiles.keyboardJson ? 'success.main' : 'error.main'}>
-                                keyboard.json: {requiredFiles.keyboardJson ? 'Found' : 'Not found'}
-                            </Typography>
-                            <Typography color={requiredFiles.keymapC ? 'success.main' : 'error.main'}>
-                                keymap.c: {requiredFiles.keymapC ? 'Found' : 'Not found'}
-                            </Typography>
-                        </Stack>
-                    )}
+          <Container>
+            <Stack spacing={2}>
+              {/* ヘッダー部分: アバター、リポジトリ選択、ブランチ選択、ログアウトボタン */}
+              <Stack direction="row" spacing={2} alignItems="center">
+                <img
+                  src={avatarUrl}
+                  alt="GitHub avatar"
+                  style={{ width: 40, height: 40, borderRadius: "50%" }}
+                />
+                <FormControl sx={{ minWidth: 200 }}>
+                  <InputLabel>Repository</InputLabel>
+                  <Select
+                    value={selectedRepo}
+                    label="Repository"
+                    onChange={(e) => handleRepoChange(e.target.value)}
+                  >
+                    {repos.map((repo) => (
+                      <MenuItem key={repo.id} value={repo.full_name}>
+                        {repo.full_name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {selectedRepo && (
+                  <FormControl sx={{ minWidth: 150 }}>
+                    <InputLabel>Branch</InputLabel>
+                    <Select
+                      value={selectedBranch}
+                      label="Branch"
+                      onChange={(e) => handleBranchChange(e.target.value)}
+                    >
+                      {branches.map((branch) => (
+                        <MenuItem key={branch.commit.sha} value={branch.name}>
+                          {branch.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() =>
+                      (window.location.href =
+                        "https://github.com/apps/vial-keymap-c-editor/installations/new")
+                    }
+                  >
+                    Add Repository
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </Button>
                 </Stack>
-            </Container>
+              </Stack>
+              {/* ブランチ選択後に必要なファイルの有無を表示 */}
+              {selectedBranch && (
+                <Stack spacing={1}>
+                  <Typography>Required files status:</Typography>
+                  <Typography
+                    color={
+                      requiredFiles.vialJson ? "success.main" : "error.main"
+                    }
+                  >
+                    vial.json: {requiredFiles.vialJson?.path ?? "Not found"}
+                  </Typography>
+                  <Typography
+                    color={
+                      requiredFiles.keyboardJson ? "success.main" : "error.main"
+                    }
+                  >
+                    keyboard.json:{" "}
+                    {requiredFiles.keyboardJson?.path ?? "Not found"}
+                  </Typography>
+                  <Typography
+                    color={
+                      requiredFiles.keymapC ? "success.main" : "error.main"
+                    }
+                  >
+                    keymap.c: {requiredFiles.keymapC?.path ?? "Not found"}
+                  </Typography>
+                </Stack>
+              )}
+            </Stack>
+          </Container>
         );
     }
 
