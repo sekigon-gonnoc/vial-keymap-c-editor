@@ -16,6 +16,7 @@ export class VialData implements IVialData {
     for (let k = 0; k < 0xffff; k++) {
       const key = this.keycodeConverter.convertIntToKeycode(k);
       this.qmkKeycodes[key.key] = key;
+      this.qmkKeycodes[key.label] = key;
       key.aliases?.forEach((alias) => {
         this.qmkKeycodes[alias] = key;
       });

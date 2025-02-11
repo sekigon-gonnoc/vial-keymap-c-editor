@@ -203,7 +203,7 @@ export class KeycodeConverter {
             group: "layer",
             value: keycode_range.QK_MOMENTARY.start + idx,
             key: `Momentary Layer ${idx}`,
-            label: `MO${idx}`,
+            label: `MO(${idx})`,
           };
         }),
       );
@@ -213,7 +213,7 @@ export class KeycodeConverter {
             group: "layer",
             value: keycode_range.QK_DEF_LAYER.start + idx,
             key: `Default Layer ${idx}`,
-            label: `DF${idx}`,
+            label: `DF(${idx})`,
           };
         }),
       );
@@ -223,7 +223,7 @@ export class KeycodeConverter {
             group: "layer",
             value: keycode_range.QK_TOGGLE_LAYER.start + idx,
             key: `Toggle Layer ${idx}`,
-            label: `TG${idx}`,
+            label: `TG(${idx})`,
           };
         }),
       );
@@ -233,7 +233,7 @@ export class KeycodeConverter {
             group: "layer",
             value: keycode_range.QK_ONE_SHOT_LAYER.start + idx,
             key: `Oneshot Layer ${idx}`,
-            label: `OSL${idx}`,
+            label: `OSL(${idx})`,
           };
         }),
       );
@@ -244,7 +244,7 @@ export class KeycodeConverter {
           group: "layer",
           value: keycode_range.QK_LAYER_MOD.start + (layer << 5),
           key: `Layer Mod(${layer}, mod)`,
-          label: `LM${layer}`,
+          label: `LM(${layer})`,
         };
       }),
     );
@@ -383,7 +383,10 @@ export class KeycodeConverter {
 
     return match(value)
       .with(
-        P.number.between(this.keycode_range.QK_MODS.start, this.keycode_range.QK_MODS.end),
+        P.number.between(
+          this.keycode_range.QK_MODS.start,
+          this.keycode_range.QK_MODS.end
+        ),
         (val) => {
           const modLabel = modStringShort((val >> 8) & 0x1f);
           const modLongLabel = modStringLong((val >> 8) & 0x1f);
@@ -395,10 +398,13 @@ export class KeycodeConverter {
             label: baseKeycode.label,
             shiftedLabel: baseKeycode.shiftedLabel,
           };
-        },
+        }
       )
       .with(
-        P.number.between(this.keycode_range.QK_MOD_TAP.start, this.keycode_range.QK_MOD_TAP.end),
+        P.number.between(
+          this.keycode_range.QK_MOD_TAP.start,
+          this.keycode_range.QK_MOD_TAP.end
+        ),
         (val) => {
           const modLabel = modStringShort((val >> 8) & 0x1f);
           const modLongLabel = modStringLong((val >> 8) & 0x1f);
@@ -411,12 +417,12 @@ export class KeycodeConverter {
             label: baseKeycode.label,
             shiftedLabel: baseKeycode.shiftedLabel,
           };
-        },
+        }
       )
       .with(
         P.number.between(
           this.keycode_range.QK_LAYER_TAP.start,
-          this.keycode_range.QK_LAYER_TAP.end,
+          this.keycode_range.QK_LAYER_TAP.end
         ),
         (val) => {
           const baseKeycode = this.convertIntToKeycode(val & 0xff);
@@ -429,12 +435,25 @@ export class KeycodeConverter {
             label: baseKeycode.label,
             shiftedLabel: baseKeycode.shiftedLabel,
           };
-        },
+        }
+      )
+      .with(
+        P.number.between(
+          this.keycode_range.QK_MOMENTARY.start,
+          this.keycode_range.QK_MOMENTARY.end
+        ),
+        (val) => {
+          return {
+            value: val,
+            key: `Momentary Layer(${val & 0x1f})`,
+            label: `MO(${val & 0x1f})`,
+          };
+        }
       )
       .with(
         P.number.between(
           this.keycode_range.QK_LAYER_MOD.start,
-          this.keycode_range.QK_LAYER_MOD.end,
+          this.keycode_range.QK_LAYER_MOD.end
         ),
         (val) => {
           const modLabel = modStringShort(val & 0x1f);
@@ -444,7 +463,7 @@ export class KeycodeConverter {
             key: `LM(${(val >> 5) & 0xf}, ${modLongLabel})`,
             label: `LM(${(val >> 5) & 0xf}, ${modLabel})`,
           };
-        },
+        }
       )
       .with(P.number, () => {
         return {
