@@ -62,7 +62,7 @@ jobs:
         working-directory: vial-qmk
         run: |
           make ${{ matrix.keyboard }}:${{ matrix.keymap }}:${{ matrix.target }} ${{ matrix.flags }}
-          mv vial-qmk/.build/${{ matrix.keyboard }}_${{ matrix.keymap }}.${{ matrix.target }} vial-qmk/.build/${{ matrix.name }}.${{ matrix.target }}
+          mv .build/${{ matrix.keyboard }}_${{ matrix.keymap }}.${{ matrix.target }} .build/${{ matrix.name }}.${{ matrix.target }}
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
