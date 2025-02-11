@@ -180,7 +180,7 @@ export class KeycodeConverter {
             group: "tapdance",
             value: keycode_range.QK_TAP_DANCE.start + idx,
             label: `TAP_DANCE_${idx}`,
-            key: `TD${idx}`,
+            key: `TD(${idx})`,
           };
         }),
       );
@@ -193,7 +193,7 @@ export class KeycodeConverter {
             group: "layer",
             value: keycode_range.QK_TO.start + idx,
             label: `To Layer ${idx}`,
-            key: `TO${idx}`,
+            key: `TO(${idx})`,
           };
         }),
       );
