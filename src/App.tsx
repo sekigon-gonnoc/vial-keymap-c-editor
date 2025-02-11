@@ -1,3 +1,4 @@
+import { GitHubApp } from "./components/GitHubApp";
 import { KeymapEditor } from "./components/KeymapEditor"
 import { VialData } from "./services/VialData";
 
@@ -203,18 +204,21 @@ const vialDef = {
 
 function App() {
   return (
-    <KeymapEditor
-      keymap={vialDef}
-      via={new VialData()}
-      dynamicEntryCount={{
-        layer: 1,
-        macro: 0,
-        tapdance: 0,
-        combo: 0,
-        override: 0,
-      }}
-    ></KeymapEditor>
+    <>
+      <GitHubApp />
+      <KeymapEditor
+        keymap={vialDef}
+        via={new VialData()}
+        dynamicEntryCount={{
+          layer: 1,
+          macro: 0,
+          tapdance: 0,
+          combo: 0,
+          override: 0,
+        }}
+      ></KeymapEditor>
+    </>
   );
 }
 
-export default App
+export default App;
