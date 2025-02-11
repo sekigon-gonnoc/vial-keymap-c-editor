@@ -304,12 +304,12 @@ export function generateKeymapC(keymap: QmkKeymap): string {
 __attribute__((weak)) void eeconfig_init_user_manual(void) {}
 void                       eeconfig_init_user(void) {
 #if VIAL_TAP_DANCE_ENTRIES > 0
-    for (size_t i = 0; i < VIAL_TAP_DANCE_ENTRIES; ++i) {
+    for (size_t i = 0; i < sizeof(default_tap_dance_entries) / sizeof(default_tap_dance_entries[0]); ++i) {
         dynamic_keymap_set_tap_dance(i, &default_tap_dance_entries[i]);
     }
 #endif
 #if VIAL_COMBO_ENTRIES > 0
-    for (size_t i = 0; i < VIAL_COMBO_ENTRIES; ++i) {
+    for (size_t i = 0; i < sizeof(default_combo_entries) / sizeof(default_combo_entries[0]); ++i) {
         dynamic_keymap_set_combo(i, &default_combo_entries[i]);
     }
 #endif
