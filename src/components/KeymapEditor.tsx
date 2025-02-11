@@ -26,6 +26,7 @@ import {
   ModifierBits,
   QmkKeycode,
 } from "./keycodes/keycodeConverter";
+import "../App.css";
 // import { MacroEditor } from "./MacroEditor";
 // import { OverrideEditor } from "./OverrideEditor";
 import { TapDanceEditor } from "./TapDanceEditor";
