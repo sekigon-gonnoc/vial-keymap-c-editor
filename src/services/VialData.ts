@@ -1,6 +1,6 @@
 import { DefaultQmkKeycode, KeycodeConverter, QmkKeycode } from "../components/keycodes/keycodeConverter";
 import { DynamicEntryCount, IVialData } from "./IVialData";
-import { QmkKeymap } from "./KeymapParser/keymap-c";
+import { QmkKeymap } from "./keymap-c";
 
 export type CustomKeycode = {
   name: string;
@@ -191,10 +191,10 @@ export class VialData implements IVialData {
   ): Promise<void> {
     values.forEach((value) => {
       this._keymap.tapDanceEntries[value.id] = {
-        onTap: this.keycodeConverter.convertIntToKeycode(value.onTap).key,
-        onHold: this.keycodeConverter.convertIntToKeycode(value.onHold).key,
-        onDoubleTap: this.keycodeConverter.convertIntToKeycode(value.onDoubleTap).key,
-        onTapHold: this.keycodeConverter.convertIntToKeycode(value.onTapHold).key,
+        onTap: this.keycodeConverter.convertIntToKeycode(value.onTap).label,
+        onHold: this.keycodeConverter.convertIntToKeycode(value.onHold).label,
+        onDoubleTap: this.keycodeConverter.convertIntToKeycode(value.onDoubleTap).label,
+        onTapHold: this.keycodeConverter.convertIntToKeycode(value.onTapHold).label,
         tappingTerm: value.tappingTerm,
       };
     });
@@ -261,11 +261,11 @@ export class VialData implements IVialData {
   ): Promise<void> {
     values.forEach((value) => {
       this._keymap.comboEntries[value.id] = {
-        key1: this.keycodeConverter.convertIntToKeycode(value.key1).key,
-        key2: this.keycodeConverter.convertIntToKeycode(value.key2).key,
-        key3: this.keycodeConverter.convertIntToKeycode(value.key3).key,
-        key4: this.keycodeConverter.convertIntToKeycode(value.key4).key,
-        output: this.keycodeConverter.convertIntToKeycode(value.output).key,
+        key1: this.keycodeConverter.convertIntToKeycode(value.key1).label,
+        key2: this.keycodeConverter.convertIntToKeycode(value.key2).label,
+        key3: this.keycodeConverter.convertIntToKeycode(value.key3).label,
+        key4: this.keycodeConverter.convertIntToKeycode(value.key4).label,
+        output: this.keycodeConverter.convertIntToKeycode(value.output).label,
       };
     });
   }
