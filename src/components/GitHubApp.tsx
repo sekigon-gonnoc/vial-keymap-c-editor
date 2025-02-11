@@ -362,7 +362,19 @@ export function GitHubApp(props: GitHubAppProps) {
                       requiredFiles.vialJson ? "success.main" : "error.main"
                     }
                   >
-                    vial.json: {requiredFiles.vialJson?.path ?? "Not found"}
+                    vial.json:{" "}
+                    {requiredFiles.vialJson ? (
+                      <a
+                        href={`https://github.com/${selectedRepo}/blob/${selectedBranch}/${requiredFiles.vialJson.path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'inherit' }}
+                      >
+                        {requiredFiles.vialJson.path}
+                      </a>
+                    ) : (
+                      "Not found"
+                    )}
                   </Typography>
                   <Typography
                     color={
@@ -370,21 +382,56 @@ export function GitHubApp(props: GitHubAppProps) {
                     }
                   >
                     keyboard.json:{" "}
-                    {requiredFiles.keyboardJson?.path ?? "Not found"}
+                    {requiredFiles.keyboardJson ? (
+                      <a
+                        href={`https://github.com/${selectedRepo}/blob/${selectedBranch}/${requiredFiles.keyboardJson.path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'inherit' }}
+                      >
+                        {requiredFiles.keyboardJson.path}
+                      </a>
+                    ) : (
+                      "Not found"
+                    )}
                   </Typography>
                   <Typography
                     color={
                       requiredFiles.keymapC ? "success.main" : "error.main"
                     }
                   >
-                    keymap.c: {requiredFiles.keymapC?.path ?? "Not found"}
+                    keymap.c:{" "}
+                    {requiredFiles.keymapC ? (
+                      <a
+                        href={`https://github.com/${selectedRepo}/blob/${selectedBranch}/${requiredFiles.keymapC.path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'inherit' }}
+                      >
+                        {requiredFiles.keymapC.path}
+                      </a>
+                    ) : (
+                      "Not found"
+                    )}
                   </Typography>
                   <Typography
                     color={
                       requiredFiles.configH ? "success.main" : "error.main"
                     }
                   >
-                    config.h: {requiredFiles.configH?.path ?? "Not found"}
+                    config.h:{" "}
+                    {requiredFiles.configH ? (
+                      <a
+                        href={`https://github.com/${selectedRepo}/blob/${selectedBranch}/${requiredFiles.configH.path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'inherit' }}
+                      >
+                        {requiredFiles.configH.path}
+                      </a>
+                    ) : (
+                      "Not found"
+                    )}
                   </Typography>
                 </Stack>
               )}
