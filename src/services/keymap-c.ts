@@ -30,14 +30,6 @@ export function parseKeymapC(
     dynamic_keymap?: { layer_count?: number };
   }
 ): QmkKeymap {
-  const keymap: QmkKeymap = {
-    version: 1,
-    author: "",
-    keyboard: "",
-    keymap: "default",
-    layout: "",
-    layers: [],
-  };
 
   // コメントを除去
   content = content.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -75,7 +67,7 @@ export function parseKeymapC(
         layers.push({
           layout: defaultLayoutName,
           keys: defaultLayout.map((key) => ({
-            keycode: "KC_TRNSPARENT",
+            keycode: "KC_TRANSPARENT",
             matrix: key.matrix,
           })),
         });
@@ -119,7 +111,7 @@ export function parseKeymapC(
 
     // キーコードとマトリクス情報を紐付け
     const keys: KeymapKey[] = layoutInfo.layout.map((key, index) => ({
-      keycode: keycodes[index] || "KC_TRNSPARENT",
+      keycode: keycodes[index] || "KC_TRANSPARENT",
       matrix: key.matrix,
     }));
 
