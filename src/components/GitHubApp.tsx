@@ -1,4 +1,4 @@
-import { Button, Container, Stack, Select, MenuItem, FormControl, InputLabel, Typography } from "@mui/material";
+import { Button, Container, Stack, Select, MenuItem, FormControl, InputLabel, Typography, Modal, Box, CircularProgress } from "@mui/material";
 import { useState, useEffect } from "react";
 import * as Hjson from "hjson";
 
@@ -65,6 +65,8 @@ export function GitHubApp(props: GitHubAppProps) {
     const [branches, setBranches] = useState<Branch[]>([]);
     // 選択中のブランチ名
     const [selectedBranch, setSelectedBranch] = useState<string>('');
+    // コミット中フラグ
+    const [isCommitting, setIsCommitting] = useState(false);
 
     // JSONファイルの内容を取得する関数
     const loadJsonFile = async (owner: string, repo: string, branch: string, path: string) => {
@@ -213,6 +215,7 @@ export function GitHubApp(props: GitHubAppProps) {
             return;
         }
 
+        setIsCommitting(true);
         try {
             const [owner, repo] = selectedRepo.split('/');
             const encodedPath = requiredFiles.keymapC.path.split('/').map(segment => encodeURIComponent(segment)).join('%2F');
@@ -231,7 +234,6 @@ export function GitHubApp(props: GitHubAppProps) {
                     })
                 }
             );
-            console.log(content)
 
             if (!response.ok) {
                 throw new Error('Failed to commit changes');
@@ -241,6 +243,8 @@ export function GitHubApp(props: GitHubAppProps) {
         } catch (error) {
             console.error('Failed to commit changes:', error);
             alert('Failed to update keymap. Please try again.');
+        } finally {
+            setIsCommitting(false);
         }
     };
 
@@ -248,6 +252,36 @@ export function GitHubApp(props: GitHubAppProps) {
     if (avatarUrl) {
         return (
           <Container>
+            {/* Loading Modal */}
+            <Modal
+              open={isCommitting}
+              aria-labelledby="commit-modal-title"
+              aria-describedby="commit-modal-description"
+            >
+              <Box sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                bgcolor: 'background.paper',
+                boxShadow: 24,
+                p: 4,
+                borderRadius: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2
+              }}>
+                <CircularProgress />
+                <Typography id="commit-modal-title" variant="h6">
+                  Committing changes...
+                </Typography>
+                <Typography id="commit-modal-description">
+                  Please wait while your changes are being saved to GitHub.
+                </Typography>
+              </Box>
+            </Modal>
+            
             <Stack spacing={2}>
               {/* ヘッダー部分: アバター、リポジトリ選択、ブランチ選択、ログアウトボタン */}
               <Stack direction="row" spacing={2} alignItems="center">
