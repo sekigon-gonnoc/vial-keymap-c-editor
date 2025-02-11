@@ -142,7 +142,7 @@ export class VialData implements IVialData {
   async GetDynamicEntryCountAll(): Promise<DynamicEntryCount> {
     return {
       layer: this.keymap.dynamicLayerCount,
-      macro: this.keymap.dynamicMacroCount,
+      macro: this.keymap.macroEntries.length,
       tapdance: this.keymap.tapDanceEntries.length,
       combo: this.keymap.comboEntries.length,
       override: this.keymap.dynamicOverrideCount,
@@ -201,22 +201,33 @@ export class VialData implements IVialData {
   }
 
   async GetMacroCount(): Promise<number> {
-    return 0;
+    return this.keymap.macroEntries.length;
   }
 
   async GetMacroBufferLen(): Promise<number> {
-    return 0;
+    return this.keymap.macroEntries.reduce((sum, entry) => sum + entry.data.length, 0);
   }
 
   async GetMacroBuffer(offset: number, length: number): Promise<number[]> {
-    return new Array(length).fill(0);
+    const allData = this.keymap.macroEntries.flatMap(entry => entry.data);
+    return allData.slice(offset, offset + length);
   }
 
   async GetMacros(macroCount: number): Promise<number[][]> {
-    return Array(macroCount).fill([]);
+    return this.keymap.macroEntries
+      .slice(0, macroCount)
+      .map(entry => entry.data);
   }
 
-  async SetMacroBuffer(offset: number, data: number[]): Promise<void> {}
+  async SetMacroBuffer(offset: number, data: number[]): Promise<void> {
+    // マクロバッファの更新処理
+    // 注: この実装は簡略化されています
+    if (this.keymap.macroEntries.length === 0) {
+      this.keymap.macroEntries.push({ data: data });
+    } else {
+      this.keymap.macroEntries[0].data = data;
+    }
+  }
 
   async GetCombo(
     ids: number[]

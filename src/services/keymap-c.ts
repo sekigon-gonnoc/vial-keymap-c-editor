@@ -1,4 +1,3 @@
-
 export interface KeymapKey {
     keycode: string;  // キーコード (例: "KC_A")
     matrix: number[];  // [row, col]のマトリクス座標
@@ -26,6 +25,10 @@ export interface ComboEntry {
     output: string;
 }
 
+export interface MacroEntry {
+    data: number[];  // マクロのバイトデータ
+}
+
 export interface QmkKeymap {
     version: number;
     author: string;
@@ -36,9 +39,9 @@ export interface QmkKeymap {
     layout: string;
     layers: KeymapLayer[];
     dynamicLayerCount: number;
-    dynamicMacroCount: number;
     tapDanceEntries: TapDanceEntry[];
     comboEntries: ComboEntry[];
+    macroEntries: MacroEntry[];
     dynamicOverrideCount: number;
     userIncludes?: string;  // ユーザー定義インクルード部分
     userCode?: string;      // ユーザー定義コード部分
@@ -125,6 +128,47 @@ function parseComboEntries(
       key3: match[3].trim(),
       key4: match[4].trim(),
       output: match[5].trim(),
+    };
+    index++;
+  }
+
+  return entries;
+}
+
+// Macroマクロの解析
+function parseMacroEntries(
+  content: string,
+  entryCount: number
+): MacroEntry[] {
+  const defaultMacroEntry: MacroEntry = {
+    data: [],
+  };
+  const entries: MacroEntry[] = Array.from(
+    { length: entryCount },
+    () => ({ ...defaultMacroEntry })
+  );
+
+  // macro定義を探す
+  const macroMatch = content.match(
+    /const\s+vial_macro_entry_t\s+(?:PROGMEM\s+)?default_macro_entries\[\]\s*=\s*\{([\s\S]*?)\};/
+  );
+  if (!macroMatch) return entries;
+
+  // MACRO_ENTRYマクロを探す
+  const entryRegex = /MACRO_ENTRY\s*\(\s*([^)]+)\s*\)/g;
+  const entriesStr = macroMatch[1];
+
+  let match;
+  let index = 0;
+  while ((match = entryRegex.exec(entriesStr)) !== null && index < entryCount) {
+    // カンマ区切りの数値配列を解析
+    const dataStr = match[1].trim();
+    const data = dataStr.split(',')
+      .map(s => parseInt(s.trim()))
+      .filter(n => !isNaN(n));
+    
+    entries[index] = {
+      data: data,
     };
     index++;
   }
@@ -301,6 +345,7 @@ export function parseKeymapC(
   const layers = parseKeymap(content, dynamicLayerCount, defaultLayout, defaultLayoutName);
   const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
   const comboEntries = parseComboEntries(content, dynamicComboCount);
+  const macroEntries = parseMacroEntries(content, dynamicMacroCount);
 
   return {
     version: 1,
@@ -310,10 +355,10 @@ export function parseKeymapC(
     layout: defaultLayoutName,
     layers,
     dynamicLayerCount,
-    dynamicMacroCount,
     dynamicOverrideCount,
     tapDanceEntries,
     comboEntries,
+    macroEntries,
     userIncludes,
     userCode,
   };
@@ -413,6 +458,25 @@ export function generateKeymapC(keymap: QmkKeymap): string {
                 output += ",";
             }
             output += "\n";
+        });
+        output += "};\n";
+        output += `#endif\n`;
+    }
+
+    // Macro定義の生成
+    if (keymap.macroEntries && keymap.macroEntries.length > 0) {
+        output += "\n// Macro definitions\n";
+        output += `#define MACRO_ENTRY(data...) ((vial_macro_entry_t){.data = {data}})\n`;
+        output += `#if VIAL_MACRO_ENTRIES > 0\n`;
+        output += "const vial_macro_entry_t default_macro_entries[] = {\n";
+        keymap.macroEntries.forEach((entry, index) => {
+            if (entry.data.length > 0) {
+                output += `    MACRO_ENTRY(${entry.data.join(', ')})`;
+                if (index < keymap.macroEntries.length - 1) {
+                    output += ",";
+                }
+                output += "\n";
+            }
         });
         output += "};\n";
         output += `#endif\n`;
