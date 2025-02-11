@@ -48,14 +48,14 @@ function extractUserSections(content: string): { userIncludes: string; userCode:
     /\/\* USER INCLUDE BEGIN \*\/([\s\S]*?)\/\* USER INCLUDE END \*\//
   );
   if (includeMatch) {
-    userIncludes = includeMatch[1].trim();
+    userIncludes = includeMatch[1];
   }
 
   const codeMatch = content.match(
     /\/\* USER CODE BEGIN \*\/([\s\S]*?)\/\* USER CODE END \*\//
   );
   if (codeMatch) {
-    userCode = codeMatch[1].trim();
+    userCode = codeMatch[1];
   }
 
   return { userIncludes, userCode };
