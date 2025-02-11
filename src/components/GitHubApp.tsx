@@ -1,5 +1,6 @@
 import { Button, Container, Stack, Select, MenuItem, FormControl, InputLabel, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
+import * as Hjson from "hjson";
 
 // GitHub APIのレスポンス型定義
 interface AvatarResponse {
@@ -46,7 +47,11 @@ interface TreeResponse {
     }[];
 }
 
-export function GitHubApp() {
+interface GitHubAppProps {
+    onloaded: (vialJson: any) => void;
+}
+
+export function GitHubApp(props: GitHubAppProps) {
     // GitHub認証済みユーザーのアバターURL
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     // ユーザーのリポジトリ一覧
@@ -59,6 +64,25 @@ export function GitHubApp() {
     const [branches, setBranches] = useState<Branch[]>([]);
     // 選択中のブランチ名
     const [selectedBranch, setSelectedBranch] = useState<string>('');
+
+    // vial.jsonの内容を取得する関数
+    const loadVialJson = async (owner: string, repo: string, branch: string, path: string) => {
+        try {
+            // パスのスラッシュを明示的にエンコード
+            const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('%2F');
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/github/repos/${owner}/${repo}/${branch}/${encodedPath}`,
+                { credentials: 'include' }
+            );
+            const vialJson = await response.json();
+            const decodedContent = atob(vialJson.content);
+            const parsedJson = Hjson.parse(decodedContent);
+
+            props.onloaded(parsedJson);
+        } catch (error) {
+            console.error('Failed to fetch vial.json:', error);
+        }
+    };
 
     // マウント時にアバター画像を取得
     useEffect(() => {
@@ -131,7 +155,11 @@ export function GitHubApp() {
             treeData.tree.forEach(file => {
                 if (file.type === 'blob') {
                     const fileName = file.path.split('/').pop() || '';
-                    if (fileName === 'vial.json') foundFiles.vialJson = { name: fileName, path: file.path, type: 'file' };
+                    if (fileName === 'vial.json') {
+                        foundFiles.vialJson = { name: fileName, path: file.path, type: 'file' };
+                        // vial.jsonが見つかったら内容を読み込む
+                        loadVialJson(owner, repo, branch, file.path);
+                    }
                     if (fileName === 'keymap.c') foundFiles.keymapC = { name: fileName, path: file.path, type: 'file' };
                     if (fileName === 'config.h') foundFiles.configH = { name: fileName, path: file.path, type: 'file' };
                 }
@@ -191,12 +219,22 @@ export function GitHubApp() {
                                 </Select>
                             </FormControl>
                         )}
-                        <Button 
-                            variant="outlined"
-                            onClick={handleLogout}
-                        >
-                            Logout
-                        </Button>
+                        <Stack direction="row" spacing={1}>
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                onClick={() => window.location.href = 'https://github.com/apps/vial-keymap-c-editor/installations/new'}
+                            >
+                                Add Repository
+                            </Button>
+                            <Button 
+                                variant="outlined"
+                                color="error"
+                                onClick={handleLogout}
+                            >
+                                Logout
+                            </Button>
+                        </Stack>
                     </Stack>
                     {/* ブランチ選択後に必要なファイルの有無を表示 */}
                     {selectedBranch && (
