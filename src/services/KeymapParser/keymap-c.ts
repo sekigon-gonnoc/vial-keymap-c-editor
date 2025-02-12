@@ -90,11 +90,35 @@ function parseLayer(
     throw new Error("Invalid LAYOUT macro");
   }
 
-  const keycodes = layerStr
-    .slice(keycodesStartPos, keycodesEndPos)
-    .split(",")
-    .map((code) => code.replace(/[\\\n\r]/g, "").trim())
-    .filter((code) => code.length > 0);
+  // キーコードをパースする
+  const keycodesStr = layerStr.slice(keycodesStartPos, keycodesEndPos);
+  const keycodes: string[] = [];
+  let currentCode = '';
+  let depth = 0;
+
+  for (let i = 0; i < keycodesStr.length; i++) {
+    const char = keycodesStr[i];
+    
+    if (char === '(') {
+      depth++;
+      currentCode += char;
+    } else if (char === ')') {
+      depth--;
+      currentCode += char;
+    } else if (char === ',' && depth === 0) {
+      if (currentCode.trim()) {
+        keycodes.push(currentCode.trim());
+      }
+      currentCode = '';
+    } else if (!char.match(/[\s\n\r\\]/)) {
+      currentCode += char;
+    }
+  }
+  
+  // 最後のキーコードを追加
+  if (currentCode.trim()) {
+    keycodes.push(currentCode.trim());
+  }
 
   // キーコードとマトリクス情報を紐付け
   const keys: KeymapKey[] = defaultLayout.layout.map((key, index) => ({
