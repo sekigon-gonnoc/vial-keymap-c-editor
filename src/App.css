@@ -87,3 +87,17 @@
   justify-content: center;
   align-items: center;
 }
+
+.highlight-next {
+  border: 2px solid #4CAF50 !important;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0px rgba(76, 175, 80, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+  }
+}

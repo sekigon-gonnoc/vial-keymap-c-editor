@@ -523,4 +523,8 @@ export class KeycodeConverter {
       replacement: this.convertIntToKeycode(override.replacement),
     };
   }
+
+  public convertKeyEventToKeycode(event: KeyboardEvent): QmkKeycode {
+    return this.tapKeycodeList.find((k) => k.label === event.key.toUpperCase()) ?? DefaultQmkKeycode;
+  }
 }

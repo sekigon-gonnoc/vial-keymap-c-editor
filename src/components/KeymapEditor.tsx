@@ -11,6 +11,7 @@ import {
   MenuItem,
   Popper,
   Select,
+  Switch,
   TextField,
 } from "@mui/material";
 import { matchSorter } from "match-sorter";
@@ -30,6 +31,7 @@ import "../App.css";
 import { MacroEditor } from "./MacroEditor";
 // import { OverrideEditor } from "./OverrideEditor";
 import { TapDanceEditor } from "./TapDanceEditor";
+import { ClassNames } from "@emotion/react";
 
 export interface KeymapProperties {
   matrix: { rows: number; cols: number };
@@ -68,6 +70,7 @@ export interface KeymapKeyProperties {
   isEncoder?: boolean;
   onKeycodeChange?: (target: KeymapKeyProperties, newKeycode: QmkKeycode) => void;
   onClick?: (target: HTMLElement) => void;
+  className?: string;
 }
 
 export const WIDTH_1U = 60;
@@ -120,7 +123,7 @@ export function KeymapKey(props: KeymapKeyProperties) {
   return (
     <div
       key={props.reactKey}
-      className={`keymap-key ${props.isEncoder && "keymap-encoder"} ${isDragOver && "drag-over"}`}
+      className={`keymap-key ${props.isEncoder && "keymap-encoder"} ${isDragOver && "drag-over"} ${props.className}`}
       style={
         props.r != 0
           ? {
@@ -503,6 +506,7 @@ function KeymapLayer(props: {
   keymap: number[];
   encodermap: number[][];
   keycodeconverter: KeycodeConverter;
+  highlightIndex?: number;
   onKeycodeChange?: (target: KeymapKeyProperties, newKeycode: QmkKeycode) => void;
 }) {
   const [popupOpen, setpopupOpen] = useState(false);
@@ -531,6 +535,7 @@ function KeymapLayer(props: {
           <KeymapKey
             key={idx}
             {...p}
+            className={idx === props.highlightIndex ? "highlight-next" : ""}
             onKeycodeChange={props.onKeycodeChange}
             onClick={(target) => {
               setCandidateKeycode(p.keycode);
@@ -581,6 +586,8 @@ function LayerEditor(props: {
   const [keymap, setKeymap] = useState<{ [layer: number]: number[] }>({});
   const [encoderCount, setEncoderCount] = useState(0);
   const [encodermap, setEncodermap] = useState<{ [layer: number]: number[][] }>({});
+  const [fastMode, setFastMode] = useState(false);
+  const [currentKeyIndex, setCurrentKeyIndex] = useState(-1);
 
   useEffect(() => {
     navigator.locks.request("load-layout", async () => {
@@ -617,6 +624,89 @@ function LayerEditor(props: {
     await props.via.SetLayoutOption(layout);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!fastMode) return;
+      
+      event.preventDefault();
+      const keys = convertToKeymapKeys(
+        props.keymap,
+        layoutOption,
+        keymap[layer],
+        encodermap[layer] ?? [[]],
+        props.keycodeConverter
+      );
+
+      // 現在のキーインデックスが-1の場合、最初の非エンコーダーキーを探す
+      if (currentKeyIndex === -1) {
+        let nextIndex = 0;
+        while (nextIndex < keys.length && keys[nextIndex].isEncoder) {
+          nextIndex++;
+        }
+        if (nextIndex < keys.length) {
+          setCurrentKeyIndex(nextIndex);
+        }
+        return;
+      }
+
+      const currentKey = keys[currentKeyIndex];
+      const keycode = props.keycodeConverter.convertKeyEventToKeycode(event);
+      
+      if (currentKey && keycode) {
+        const offset = props.keymap.matrix.cols * currentKey.matrix[0] + currentKey.matrix[1];
+        const newKeymap = { ...keymap };
+        newKeymap[layer][offset] = keycode.value;
+        setKeymap(newKeymap);
+        sendKeycode(layer, currentKey.matrix[0], currentKey.matrix[1], keycode.value);
+
+        // 次の非エンコーダーキーを探す
+        let nextIndex = currentKeyIndex + 1;
+        while (nextIndex < keys.length && keys[nextIndex].isEncoder) {
+          nextIndex++;
+        }
+
+        if (nextIndex >= keys.length) {
+          setCurrentKeyIndex(-1);
+          setFastMode(false);
+        } else {
+          setCurrentKeyIndex(nextIndex);
+        }
+      }
+    };
+
+    if (fastMode) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [fastMode, currentKeyIndex, layer, keymap, encodermap]);
+
+  useEffect(() => {
+    if (fastMode) {
+      const keys = convertToKeymapKeys(
+        props.keymap,
+        layoutOption,
+        keymap[layer],
+        encodermap[layer] ?? [[]],
+        props.keycodeConverter
+      );
+
+      // Find first non-encoder key
+      let firstIndex = 0;
+      while (firstIndex < keys.length && keys[firstIndex].isEncoder) {
+        firstIndex++;
+      }
+
+      if (firstIndex < keys.length) {
+        setCurrentKeyIndex(firstIndex);
+      }
+    } else {
+      setCurrentKeyIndex(-1);
+    }
+  }, [fastMode]);
+
   return (
     <>
       <div>
@@ -651,6 +741,17 @@ function LayerEditor(props: {
             setLayer(layer);
           }}
         ></LayerSelector>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={fastMode}
+              onChange={(e) => {
+                setFastMode(e.target.checked);
+              }}
+            />
+          }
+          label="Fast Mode"
+        />
         {Object.keys(keymap).includes(layer.toString()) ? (
           <KeymapLayer
             keymapProps={props.keymap}
@@ -658,6 +759,7 @@ function LayerEditor(props: {
             keymap={keymap[layer]}
             encodermap={encodermap[layer] ?? [[]]}
             keycodeconverter={props.keycodeConverter}
+            highlightIndex={currentKeyIndex}
             onKeycodeChange={(target, newKeycode) => {
               if (target.isEncoder) {
                 const newencoder = { ...encodermap };
