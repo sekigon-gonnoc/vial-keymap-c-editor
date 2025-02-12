@@ -1,11 +1,13 @@
 # vial-keymap-c-editor
 
+<img src="public/icon.svg" width=100px></img>
 https://vial-keymap-c-editor.pages.dev/
 
 vialの初期キーマップをGUIから設定するためのツールです。 GitHubとの連携を許可することでkeymap.cを読みこみ、編集した結果をコミットできます。
 
 対象リポジトリのファイル構成は下記のようにしてください。
-[サンプルはこちらです。](https://github.com/sekigon-gonnoc/auto-kdk-tutorial-data-wired-controller)
+[サンプルはこちらです。](https://github.com/sekigon-gonnoc/auto-kdk-tutorial-data-wired-controller)  
+
 [`.github/workflow/build.yml`](https://github.com/sekigon-gonnoc/auto-kdk-tutorial-data-wired-controller/blob/main/.github/workflows/build.yml)と[`target.json`](https://github.com/sekigon-gonnoc/auto-kdk-tutorial-data-wired-controller/blob/main/target.json)は編集したキーマップをGitHub Actionsでビルドするための設定です。
 
 ```
@@ -15,7 +17,7 @@ vialの初期キーマップをGUIから設定するためのツールです。 
 target.json (optional)
 qmk_firmware/
 └── keyboards/
-    └── <your-keyboards>/
+    └── <your-keyboard>/
         ├── keyboard.json
         └── keymaps/
             └── vial/
