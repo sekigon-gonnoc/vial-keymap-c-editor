@@ -42,7 +42,7 @@ function App() {
             via={vialData}
             dynamicEntryCount={{
               layer: vialData.keymap.dynamicLayerCount,
-              macro: vialData.keymap.macroEntries.length,
+              macro: vialData.keymap.dynamicMacroCount,
               tapdance: vialData.keymap.tapDanceEntries.length,
               combo: vialData.keymap.comboEntries.length,
               override: vialData.keymap.dynamicOverrideCount,

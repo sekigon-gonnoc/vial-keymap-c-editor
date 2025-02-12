@@ -1,5 +1,5 @@
 import { ComboEntry, generateComboEntries, parseComboEntries } from "./comboParser";
-import { MacroEntry } from "./macroParser";
+import { generateMacroEntries, parseMacroEntries } from "./macroParser";
 import { generateTapDanceEntries, parseTapDanceEntries, TapDanceEntry } from "./tapDanceParser";
 
 export interface KeymapKey {
@@ -23,9 +23,10 @@ export interface QmkKeymap {
     layout: string;
     layers: KeymapLayer[];
     dynamicLayerCount: number;
+    dynamicMacroCount: number;
     tapDanceEntries: TapDanceEntry[];
     comboEntries: ComboEntry[];
-    macroEntries: MacroEntry[];
+    macroEntries: number[];  // マクロバッファのバイト配列
     dynamicOverrideCount: number;
     userIncludes?: string;  // ユーザー定義インクルード部分
     userCode?: string;      // ユーザー定義コード部分
@@ -227,8 +228,7 @@ export function parseKeymapC(
   const layers = parseKeymap(content, dynamicLayerCount, defaultLayout, defaultLayoutName);
   const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
   const comboEntries = parseComboEntries(content, dynamicComboCount);
-  // const macroEntries = parseMacroEntries(content, dynamicMacroCount);
-  const macroEntries: MacroEntry[] = [];
+  const macroEntries = parseMacroEntries(content);
 
   return {
     version: 1,
@@ -239,6 +239,7 @@ export function parseKeymapC(
     layers,
     dynamicLayerCount,
     dynamicOverrideCount,
+    dynamicMacroCount: 32,
     tapDanceEntries,
     comboEntries,
     macroEntries,
@@ -318,9 +319,8 @@ export function generateKeymapC(keymap: QmkKeymap): string {
     // Combo定義の生成
     output += generateComboEntries(keymap.comboEntries);
 
-    // TODO: macro
-    // // Macro定義の生成
-    // output +=  generateMacroEntries(keymap.macroEntries);
+    // Macro定義の生成
+    output += generateMacroEntries(keymap.macroEntries);
 
     // 初期化コード
     output += `
@@ -337,6 +337,8 @@ void                       eeconfig_init_user(void) {
         dynamic_keymap_set_combo(i, &default_combo_entries[i]);
     }
 #endif
+    uint16_t const macro_buffer_size = MIN(sizeof(default_macro_buffer), dynamic_keymap_macro_get_buffer_size());
+    dynamic_keymap_macro_set_buffer(0, macro_buffer_size, (uint8_t *)default_macro_buffer);
 
     eeconfig_init_user_manual();
 }`;

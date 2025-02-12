@@ -213,22 +213,95 @@ export class VialData implements IVialData {
   }
 
   async GetMacroCount(): Promise<number> {
-    return this.keymap.macroEntries.length;
+    let count = 0;
+    let i = 0;
+    
+    while (i < this.keymap.macroEntries.length) {
+      const entry = this.keymap.macroEntries[i];
+      
+      if (entry === 0) {
+        count++;
+      } else if (entry === 1) {
+        // アクションの場合、次のバイトを見て適切にスキップ
+        const actionType = this.keymap.macroEntries[i + 1];
+        if (actionType === 4 || (actionType >= 5 && actionType <= 7)) {
+          i += 3; // [1, type, value, value]
+        } else if (actionType >= 1 && actionType <= 3) {
+          i += 2; // [1, type, value]
+        }
+      }
+      i++;
+    }
+    
+    return Math.min(count, 32);
   }
 
   async GetMacroBufferLen(): Promise<number> {
-    return 0;
+    return this.keymap.macroEntries.length;
   }
 
-  async GetMacroBuffer(_offset: number, _length: number): Promise<number[]> {
-    return [];
+  async GetMacroBuffer(offset: number, length: number): Promise<number[]> {
+    if (offset + length > this.keymap.macroEntries.length) {
+      const result = new Array(length).fill(0);
+      result.splice(0, this.keymap.macroEntries.length - offset, ...this.keymap.macroEntries.slice(offset));
+      return result;
+    }
+    return this.keymap.macroEntries.slice(offset, offset + length);
   }
 
-  async GetMacros(_macroCount: number): Promise<number[][]> {
-    return [];
+  async GetMacros(macroCount: number): Promise<number[][]> {
+    const macros: number[][] = [];
+    let currentMacro: number[] = [];
+    let i = 0;
+    
+    while (i < this.keymap.macroEntries.length && macros.length < macroCount) {
+      const entry = this.keymap.macroEntries[i];
+      
+      if (entry === 0 && currentMacro.length > 0) {
+        // 純粋な区切り文字としての0の場合
+        macros.push(currentMacro);
+        currentMacro = [];
+      } else if (entry === 1) {
+        // アクションの場合、次のバイトを見て処理
+        const actionType = this.keymap.macroEntries[i + 1];
+        if (actionType === 4) {
+          // Delay action: [1, 4, value, value]
+          currentMacro.push(entry);
+          currentMacro.push(this.keymap.macroEntries[i + 1]);
+          currentMacro.push(this.keymap.macroEntries[i + 2]);
+          currentMacro.push(this.keymap.macroEntries[i + 3]);
+          i += 3;
+        } else if (actionType >= 5 && actionType <= 7) {
+          // Extended keycode action: [1, type, keycode_low, keycode_high]
+          currentMacro.push(entry);
+          currentMacro.push(this.keymap.macroEntries[i + 1]);
+          currentMacro.push(this.keymap.macroEntries[i + 2]);
+          currentMacro.push(this.keymap.macroEntries[i + 3]);
+          i += 3;
+        } else if (actionType >= 1 && actionType <= 3) {
+          // Basic keycode action: [1, type, keycode]
+          currentMacro.push(entry);
+          currentMacro.push(this.keymap.macroEntries[i + 1]);
+          currentMacro.push(this.keymap.macroEntries[i + 2]);
+          i += 2;
+        }
+      } else {
+        // 通常の文字の場合
+        currentMacro.push(entry);
+      }
+      i++;
+    }
+
+    if (currentMacro.length > 0) {
+      macros.push(currentMacro);
+    }
+
+    return macros;
   }
 
-  async SetMacroBuffer(_offset: number, _data: number[]): Promise<void> {}
+  async SetMacroBuffer(offset: number, data: number[]): Promise<void> {
+    this.keymap.macroEntries.splice(offset, data.length, ...data);
+  }
 
   async GetCombo(
     ids: number[]

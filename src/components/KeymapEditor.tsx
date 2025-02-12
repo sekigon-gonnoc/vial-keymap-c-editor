@@ -27,7 +27,7 @@ import {
   QmkKeycode,
 } from "./keycodes/keycodeConverter";
 import "../App.css";
-// import { MacroEditor } from "./MacroEditor";
+import { MacroEditor } from "./MacroEditor";
 // import { OverrideEditor } from "./OverrideEditor";
 import { TapDanceEditor } from "./TapDanceEditor";
 
@@ -725,7 +725,7 @@ export function KeymapEditor(props: {
     "layer",
   );
   const [tdIndex, setTdIndex] = useState(-1);
-  const [_macroIndex, setMacroIndex] = useState(-1);
+  const [macroIndex, setMacroIndex] = useState(-1);
   const [comboIndex, setComboIndex] = useState(-1);
   const [_overrideIndex, setOverrideIndex] = useState(-1);
   const [lang, setLang] = useState("US");
@@ -762,8 +762,7 @@ export function KeymapEditor(props: {
           }}
         ></TapDanceEditor>
       </Box>
-      {/* TODO: macro */}
-      {/* <Box hidden={menuType !== "macro"}>
+      <Box hidden={menuType !== "macro"}>
         <MacroEditor
           via={props.via}
           keycodeConverter={keycodeConverter}
@@ -773,7 +772,7 @@ export function KeymapEditor(props: {
             setMenuType("layer");
           }}
         ></MacroEditor>
-      </Box> */}
+      </Box>
       <Box hidden={menuType !== "combo"}>
         <ComboEditor
           via={props.via}
@@ -813,8 +812,7 @@ export function KeymapEditor(props: {
           { label: "Media", keygroup: ["media"] },
           { label: "Quantum", keygroup: ["quantum"] },
           { label: "Layer", keygroup: ["layer"] },
-          // TODO: macro
-          // { label: "Macro", keygroup: ["macro"] },
+          { label: "Macro", keygroup: ["macro"] },
           { label: "TapDance", keygroup: ["tapdance"] },
           // TODO: override
           // { label: "Combo/Override", keygroup: ["combo", "keyoverride"] },
