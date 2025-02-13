@@ -5,7 +5,7 @@ import {
   KeycodeConverter,
   ModifierBit,
 } from "../keycodes/keycodeConverter";
-import { KeymapProperties } from "./KeymapTypes";
+import { KeymapKeyProperties, KeymapProperties } from "./KeymapTypes";
 import { IVialData } from "../../services/IVialData";
 import { KeymapLayer } from "./KeyComponents";
 import { convertToKeymapKeys } from "./converToKeymapKeys";
@@ -139,6 +139,18 @@ export function LayerEditor(props: {
     ); // Windows key/Command key
   };
 
+  // matrix順にソートする関数を追加
+  const sortByMatrix = (keys: KeymapKeyProperties[]) => {
+    return [...keys].sort((a, b) => {
+      // まず行を比較
+      if (a.matrix[0] !== b.matrix[0]) {
+        return a.matrix[0] - b.matrix[0];
+      }
+      // 同じ行なら列を比較
+      return a.matrix[1] - b.matrix[1];
+    });
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!fastMode) return;
@@ -178,14 +190,19 @@ export function LayerEditor(props: {
         props.keycodeConverter
       );
 
+      // matrix順にソートしたキーリストを取得
+      const sortedKeys = sortByMatrix(keys.filter(k => !k.isEncoder));
+
       // 最初のキー選択
       if (currentKeyIndex === -1) {
-        let nextIndex = 0;
-        while (nextIndex < keys.length && keys[nextIndex].isEncoder) {
-          nextIndex++;
-        }
-        if (nextIndex < keys.length) {
-          setCurrentKeyIndex(nextIndex);
+        if (sortedKeys.length > 0) {
+          // matrix順の最初のキーのインデックスを探す
+          const firstKey = sortedKeys[0];
+          const originalIndex = keys.findIndex(k => 
+            k.matrix[0] === firstKey.matrix[0] && 
+            k.matrix[1] === firstKey.matrix[1]
+          );
+          setCurrentKeyIndex(originalIndex);
         }
         return;
       }
@@ -219,19 +236,25 @@ export function LayerEditor(props: {
           finalKeycode.value
         );
 
-        // 次の非エンコーダーキーを探す
-        let nextIndex = currentKeyIndex + 1;
-        while (nextIndex < keys.length && keys[nextIndex].isEncoder) {
-          nextIndex++;
-        }
-
-        if (nextIndex >= keys.length) {
+        // 次のキーを探す
+        const currentMatrixKey = sortedKeys.find(k => 
+          k.matrix[0] === currentKey.matrix[0] && 
+          k.matrix[1] === currentKey.matrix[1]
+        );
+        const currentSortedIndex = sortedKeys.indexOf(currentMatrixKey!);
+        
+        if (currentSortedIndex < sortedKeys.length - 1) {
+          // 次のキーのインデックスを元のkeysから探す
+          const nextKey = sortedKeys[currentSortedIndex + 1];
+          const nextIndex = keys.findIndex(k => 
+            k.matrix[0] === nextKey.matrix[0] && 
+            k.matrix[1] === nextKey.matrix[1]
+          );
+          setCurrentKeyIndex(nextIndex);
+        } else {
           setCurrentKeyIndex(-1);
           setFastMode(false);
           setActiveModifiers(new Set()); // 修飾キーの状態をクリア
-        } else {
-          setCurrentKeyIndex(nextIndex);
-          // 修飾キーはクリアしない - 次のキー入力でも使用可能に
         }
       }
     };
@@ -289,13 +312,14 @@ export function LayerEditor(props: {
         props.keycodeConverter
       );
 
-      // Find first non-encoder key
-      let firstIndex = 0;
-      while (firstIndex < keys.length && keys[firstIndex].isEncoder) {
-        firstIndex++;
-      }
-
-      if (firstIndex < keys.length) {
+      // matrix順の最初のキーを選択
+      const sortedKeys = sortByMatrix(keys.filter(k => !k.isEncoder));
+      if (sortedKeys.length > 0) {
+        const firstKey = sortedKeys[0];
+        const firstIndex = keys.findIndex(k => 
+          k.matrix[0] === firstKey.matrix[0] && 
+          k.matrix[1] === firstKey.matrix[1]
+        );
         setCurrentKeyIndex(firstIndex);
       }
     } else {
