@@ -120,18 +120,35 @@ export class VialData implements IVialData {
     }
   }
 
-  async GetEncoder(_layer: number, count: number): Promise<number[][]> {
-    return Array(count).fill([0, 0]);
+  async GetEncoder(layer: number, count: number): Promise<number[][]> {
+    return this._keymap.encoderEntries[layer]
+      .slice(0, count)
+      .map((entry) => [
+        this.qmkKeycodes[entry.ccw]?.value ?? 0,
+        this.qmkKeycodes[entry.cw]?.value ?? 0,
+      ]);
   }
 
   async SetEncoder(
-    _values: {
+    values: {
       layer: number;
       index: number;
       direction: number;
       keycode: number;
     }[]
-  ): Promise<void> {}
+  ): Promise<void> {
+    if (!this.keycodeConverter) {
+      throw new Error("KeycodeConverter is not initialized");
+    }
+    values.forEach((value) => {
+      const qk = this.keycodeConverter!.convertIntToKeycode(value.keycode);
+      if (value.direction === 0) {
+        this._keymap.encoderEntries[value.layer][value.index].ccw = qk.key;
+      } else {
+        this._keymap.encoderEntries[value.layer][value.index].cw = qk.key;
+      }
+    });
+  }
 
   async GetDynamicEntryCount(): Promise<{
     tapdance: number;
@@ -215,10 +232,10 @@ export class VialData implements IVialData {
   async GetMacroCount(): Promise<number> {
     let count = 0;
     let i = 0;
-    
+
     while (i < this.keymap.macroEntries.length) {
       const entry = this.keymap.macroEntries[i];
-      
+
       if (entry === 0) {
         count++;
       } else if (entry === 1) {
@@ -232,7 +249,7 @@ export class VialData implements IVialData {
       }
       i++;
     }
-    
+
     return Math.min(count, 32);
   }
 
@@ -243,7 +260,11 @@ export class VialData implements IVialData {
   async GetMacroBuffer(offset: number, length: number): Promise<number[]> {
     if (offset + length > this.keymap.macroEntries.length) {
       const result = new Array(length).fill(0);
-      result.splice(0, this.keymap.macroEntries.length - offset, ...this.keymap.macroEntries.slice(offset));
+      result.splice(
+        0,
+        this.keymap.macroEntries.length - offset,
+        ...this.keymap.macroEntries.slice(offset)
+      );
       return result;
     }
     return this.keymap.macroEntries.slice(offset, offset + length);
@@ -253,10 +274,10 @@ export class VialData implements IVialData {
     const macros: number[][] = [];
     let currentMacro: number[] = [];
     let i = 0;
-    
+
     while (i < this.keymap.macroEntries.length && macros.length < macroCount) {
       const entry = this.keymap.macroEntries[i];
-      
+
       if (entry === 0 && currentMacro.length > 0) {
         // 純粋な区切り文字としての0の場合
         macros.push(currentMacro);

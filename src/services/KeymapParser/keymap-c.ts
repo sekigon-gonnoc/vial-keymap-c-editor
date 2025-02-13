@@ -1,4 +1,5 @@
 import { ComboEntry, generateComboEntries, parseComboEntries } from "./comboParser";
+import { EncoderEntry, generateEncoderEntries, parseEncoderEntries } from "./encoderParser";
 import { generateMacroEntries, parseMacroEntries } from "./macroParser";
 import { generateTapDanceEntries, parseTapDanceEntries, TapDanceEntry } from "./tapDanceParser";
 
@@ -30,6 +31,7 @@ export interface QmkKeymap {
     dynamicOverrideCount: number;
     userIncludes?: string;  // ユーザー定義インクルード部分
     userCode?: string;      // ユーザー定義コード部分
+    encoderEntries: EncoderEntry[][];
 }
 
 
@@ -200,6 +202,7 @@ export function parseKeymapC(
   keyboardJson: {
     layouts: { [key: string]: { layout: { matrix: number[] }[] } };
     dynamic_keymap?: { layer_count?: number };
+    encoder?: { rotary?: { pin_a: string; pin_b: string }[] };
   },
   configH: string
 ): QmkKeymap {
@@ -221,11 +224,24 @@ export function parseKeymapC(
   // 各種動的エントリー数を取得
   const dynamicComboCount = getConfigValue(configH, "VIAL_COMBO_ENTRIES") ?? 0;
   // const dynamicMacroCount = 32;
-  const dynamicTapDanceCount = getConfigValue(configH, "VIAL_TAP_DANCE_ENTRIES") ?? 0;
-  const dynamicOverrideCount = getConfigValue(configH, "VIAL_KEY_OVERRIDE_ENTRIES") ?? 0;
+  const dynamicTapDanceCount =
+    getConfigValue(configH, "VIAL_TAP_DANCE_ENTRIES") ?? 0;
+  const dynamicOverrideCount =
+    getConfigValue(configH, "VIAL_KEY_OVERRIDE_ENTRIES") ?? 0;
+  const encoderCount = keyboardJson.encoder?.rotary?.length ?? 0;
+  const encoderEntries = parseEncoderEntries(
+    content,
+    encoderCount,
+    dynamicLayerCount
+  );
 
   // 各セクションを解析
-  const layers = parseKeymap(content, dynamicLayerCount, defaultLayout, defaultLayoutName);
+  const layers = parseKeymap(
+    content,
+    dynamicLayerCount,
+    defaultLayout,
+    defaultLayoutName
+  );
   const tapDanceEntries = parseTapDanceEntries(content, dynamicTapDanceCount);
   const comboEntries = parseComboEntries(content, dynamicComboCount);
   const macroEntries = parseMacroEntries(content);
@@ -245,6 +261,7 @@ export function parseKeymapC(
     macroEntries,
     userIncludes,
     userCode,
+    encoderEntries,
   };
 }
 
@@ -312,6 +329,9 @@ export function generateKeymapC(keymap: QmkKeymap): string {
     });
 
     output += '};\n';
+
+    // エンコーダーマップの生成を追加
+    output += generateEncoderEntries(keymap.encoderEntries);
 
     // Tap Dance定義の生成
     output += generateTapDanceEntries(keymap.tapDanceEntries);
