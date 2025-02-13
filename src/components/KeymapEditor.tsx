@@ -588,6 +588,7 @@ function LayerEditor(props: {
   const [encodermap, setEncodermap] = useState<{ [layer: number]: number[][] }>({});
   const [fastMode, setFastMode] = useState(false);
   const [currentKeyIndex, setCurrentKeyIndex] = useState(-1);
+  const [activeModifiers, setActiveModifiers] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     navigator.locks.request("load-layout", async () => {
@@ -624,11 +625,38 @@ function LayerEditor(props: {
     await props.via.SetLayoutOption(layout);
   };
 
+  const isModifierEvent = (event: KeyboardEvent): boolean => {
+    return event.key === 'Control' || 
+           event.key === 'Shift' || 
+           event.key === 'Alt' || 
+           event.key === 'Meta';  // Windows key/Command key
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!fastMode) return;
       
       event.preventDefault();
+
+      // 修飾キーの場合は状態を記録して終了
+      if (isModifierEvent(event)) {
+        const modValue = event.key === 'Control' ? ModifierBit.Ctrl :
+                        event.key === 'Shift' ? ModifierBit.Shift :
+                        event.key === 'Alt' ? ModifierBit.Alt :
+                        event.key === 'Meta' ? ModifierBit.GUI : 0;
+        
+        if (modValue !== 0) {
+          const finalModValue = (event.location === 2) ? 
+            modValue | ModifierBit.UseRight : modValue;
+          
+          setActiveModifiers(prev => new Set([...prev, finalModValue]));
+        }
+        return;
+      }
+
+      const keycode = props.keycodeConverter.convertKeyEventToKeycode(event);
+      if (!keycode) return;
+
       const keys = convertToKeymapKeys(
         props.keymap,
         layoutOption,
@@ -637,7 +665,7 @@ function LayerEditor(props: {
         props.keycodeConverter
       );
 
-      // 現在のキーインデックスが-1の場合、最初の非エンコーダーキーを探す
+      // 最初のキー選択
       if (currentKeyIndex === -1) {
         let nextIndex = 0;
         while (nextIndex < keys.length && keys[nextIndex].isEncoder) {
@@ -650,14 +678,23 @@ function LayerEditor(props: {
       }
 
       const currentKey = keys[currentKeyIndex];
-      const keycode = props.keycodeConverter.convertKeyEventToKeycode(event);
-      
-      if (currentKey && keycode) {
+      if (currentKey) {
+        // 修飾キーが押されている場合は組み合わせる
+        const modifierBits = Array.from(activeModifiers).reduce((acc, mod) => acc | mod, 0);
+        const finalKeycode =
+          activeModifiers.size > 0
+            ? props.keycodeConverter.combineKeycodes(
+                keycode,
+                DefaultQmkKeycode,
+                modifierBits
+              ) ?? keycode
+            : keycode;
+
         const offset = props.keymap.matrix.cols * currentKey.matrix[0] + currentKey.matrix[1];
         const newKeymap = { ...keymap };
-        newKeymap[layer][offset] = keycode.value;
+        newKeymap[layer][offset] = finalKeycode.value;
         setKeymap(newKeymap);
-        sendKeycode(layer, currentKey.matrix[0], currentKey.matrix[1], keycode.value);
+        sendKeycode(layer, currentKey.matrix[0], currentKey.matrix[1], finalKeycode.value);
 
         // 次の非エンコーダーキーを探す
         let nextIndex = currentKeyIndex + 1;
@@ -668,20 +705,50 @@ function LayerEditor(props: {
         if (nextIndex >= keys.length) {
           setCurrentKeyIndex(-1);
           setFastMode(false);
+          setActiveModifiers(new Set()); // 修飾キーの状態をクリア
         } else {
           setCurrentKeyIndex(nextIndex);
+          // 修飾キーはクリアしない - 次のキー入力でも使用可能に
+        }
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (!fastMode) return;
+      
+      event.preventDefault();
+
+      // 修飾キーの場合のみ処理
+      if (isModifierEvent(event)) {
+        const modValue = event.key === 'Control' ? ModifierBit.Ctrl :
+                        event.key === 'Shift' ? ModifierBit.Shift :
+                        event.key === 'Alt' ? ModifierBit.Alt :
+                        event.key === 'Meta' ? ModifierBit.GUI : 0;
+        
+        if (modValue !== 0) {
+          // 右修飾キーの場合はUseRightフラグを追加
+          const finalModValue = (event.location === 2) ? 
+            modValue | ModifierBit.UseRight : modValue;
+
+          setActiveModifiers(prev => {
+            const next = new Set(prev);
+            next.delete(finalModValue);
+            return next;
+          });
         }
       }
     };
 
     if (fastMode) {
       window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keyup', handleKeyUp);
     }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [fastMode, currentKeyIndex, layer, keymap, encodermap]);
+  }, [fastMode, currentKeyIndex, layer, keymap, encodermap, activeModifiers]);
 
   useEffect(() => {
     if (fastMode) {
