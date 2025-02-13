@@ -143,7 +143,7 @@ export interface KeymapLayerProps {
   encodermap: number[][];
   keycodeconverter: KeycodeConverter;
   highlightIndex?: number;
-  fastMode?: boolean;  // Add this prop
+  captureMode?: boolean;  // fastMode -> captureMode
   onKeycodeChange?: (target: KeymapKeyProperties, newKeycode: QmkKeycode) => void;
   onKeyClick?: (index: number) => void;  // Add this prop
 }
@@ -176,7 +176,7 @@ export function KeymapLayer(props: KeymapLayerProps) {
             className={idx === props.highlightIndex ? "highlight-next" : ""}
             onKeycodeChange={props.onKeycodeChange}
             onClick={(target) => {
-              if (props.fastMode) {
+              if (props.captureMode) { // fastMode -> captureMode
                 props.onKeyClick?.(idx);
               } else {
                 setCandidateKeycode(p.keycode);

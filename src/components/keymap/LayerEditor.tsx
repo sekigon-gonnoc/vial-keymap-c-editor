@@ -75,7 +75,7 @@ export function LayerEditor(props: {
   const [encodermap, setEncodermap] = useState<{ [layer: number]: number[][] }>(
     {}
   );
-  const [fastMode, setFastMode] = useState(false);
+  const [captureMode, setCaptureMode] = useState(false);
   const [currentKeyIndex, setCurrentKeyIndex] = useState(-1);
   const [activeModifiers, setActiveModifiers] = useState<Set<number>>(
     new Set()
@@ -153,7 +153,7 @@ export function LayerEditor(props: {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!fastMode) return;
+      if (!captureMode) return;
 
       event.preventDefault();
 
@@ -253,14 +253,14 @@ export function LayerEditor(props: {
           setCurrentKeyIndex(nextIndex);
         } else {
           setCurrentKeyIndex(-1);
-          setFastMode(false);
+          setCaptureMode(false);
           setActiveModifiers(new Set()); // 修飾キーの状態をクリア
         }
       }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (!fastMode) return;
+      if (!captureMode) return;
 
       event.preventDefault();
 
@@ -291,7 +291,7 @@ export function LayerEditor(props: {
       }
     };
 
-    if (fastMode) {
+    if (captureMode) {
       window.addEventListener("keydown", handleKeyDown);
       window.addEventListener("keyup", handleKeyUp);
     }
@@ -300,10 +300,10 @@ export function LayerEditor(props: {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [fastMode, currentKeyIndex, layer, keymap, encodermap, activeModifiers]);
+  }, [captureMode, currentKeyIndex, layer, keymap, encodermap, activeModifiers]);
 
   useEffect(() => {
-    if (fastMode) {
+    if (captureMode) {
       const keys = convertToKeymapKeys(
         props.keymap,
         layoutOption,
@@ -325,7 +325,7 @@ export function LayerEditor(props: {
     } else {
       setCurrentKeyIndex(-1);
     }
-  }, [fastMode]);
+  }, [captureMode]);
 
   return (
     <>
@@ -364,13 +364,13 @@ export function LayerEditor(props: {
         <FormControlLabel
           control={
             <Switch
-              checked={fastMode}
+              checked={captureMode}
               onChange={(e) => {
-                setFastMode(e.target.checked);
+                setCaptureMode(e.target.checked);
               }}
             />
           }
-          label="Fast Mode"
+          label="Key Capture Mode"
         />
         {Object.keys(keymap).includes(layer.toString()) ? (
           <KeymapLayer
@@ -380,10 +380,10 @@ export function LayerEditor(props: {
             encodermap={encodermap[layer] ?? [[]]}
             keycodeconverter={props.keycodeConverter}
             highlightIndex={currentKeyIndex}
-            fastMode={fastMode}
+            captureMode={captureMode}
             onKeyClick={(index) => {
-              // Fast Mode時はクリックでカーソル移動
-              if (fastMode) {
+              // Key Capture Mode時はクリックでカーソル移動
+              if (captureMode) {
                 setCurrentKeyIndex(index);
               }
             }}
