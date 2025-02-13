@@ -525,7 +525,7 @@ export class KeycodeConverter {
   }
 
   public convertKeyEventToKeycode(event: KeyboardEvent): QmkKeycode {
-    const keycode = (event.key === "Unidentified" ? event.code : event.key).toUpperCase();
+    const keycode = (["Unidentified", " "].includes(event.key) ? event.code : event.key).toUpperCase();
     return (
       this.tapKeycodeList.find(
         (k) =>

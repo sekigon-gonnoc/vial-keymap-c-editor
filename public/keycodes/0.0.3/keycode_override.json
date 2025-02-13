@@ -98,6 +98,15 @@
       }
     }
   },
+  "44": {
+    "group": "basic",
+    "key": "KC_SPACE",
+    "label": "Spacebar",
+    "aliases": [
+      "KC_SPC",
+      "Space"
+    ]
+  },
   "45": {
     "group": "basic",
     "key": "KC_MINUS",
