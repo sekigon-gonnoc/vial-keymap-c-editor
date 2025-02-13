@@ -3,7 +3,8 @@ import { Box, Button, IconButton, Stack, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 import { IVialData } from "../services/IVialData";
 import { DefaultQmkKeycode, KeycodeConverter } from "./keycodes/keycodeConverter";
-import { EditableKey, KeymapKeyPopUp } from "./KeymapEditor";
+import { EditableKey } from "./keymap/KeyComponents";
+import { KeymapKeyPopUp } from "./keymap/KeymapKeyPopUp";
 
 export function MacroEditor(props: {
   via: IVialData;

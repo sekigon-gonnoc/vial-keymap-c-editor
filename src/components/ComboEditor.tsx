@@ -2,7 +2,8 @@ import { Box, Button, Grid } from "@mui/material";
 import { Fragment, useEffect, useState } from "react";
 import { IVialData } from "../services/IVialData";
 import { DefaultQmkKeycode, KeycodeConverter, QmkKeycode } from "./keycodes/keycodeConverter";
-import { EditableKey, KeymapKeyPopUp } from "./KeymapEditor";
+import { EditableKey } from "./keymap/KeyComponents";
+import { KeymapKeyPopUp } from "./keymap/KeymapKeyPopUp";
 
 export function ComboEditor(props: {
   via: IVialData;
