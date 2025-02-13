@@ -80,6 +80,7 @@ export function LayerEditor(props: {
   const [activeModifiers, setActiveModifiers] = useState<Set<number>>(
     new Set()
   );
+  const [modifierOnlyPress, setModifierOnlyPress] = useState(false);
 
   useEffect(() => {
     navigator.locks.request("load-layout", async () => {
@@ -151,6 +152,33 @@ export function LayerEditor(props: {
     });
   };
 
+  // 修飾キーが離されたときの処理を行う関数を抽出
+  const handleModifierRelease = (releasedMod: number, isRight: boolean, keys: KeymapKeyProperties[]) => {
+    const currentKey = keys[currentKeyIndex];
+    if (!currentKey) return;
+
+    // 離された修飾キーに対応するキーコードを決定
+    const baseValue = isRight ? 228 : 224; // 224: KC_LCTL, 228: KC_RCTL
+    const keycode = 
+      releasedMod === ModifierBit.Ctrl ? baseValue :      // KC_LCTL or KC_RCTL
+      releasedMod === ModifierBit.Shift ? baseValue + 1 : // KC_LSFT or KC_RSFT
+      releasedMod === ModifierBit.Alt ? baseValue + 2 :   // KC_LALT or KC_RALT
+      releasedMod === ModifierBit.GUI ? baseValue + 3 :   // KC_LGUI or KC_RGUI
+      0;
+
+    if (keycode === 0) return;
+
+    // キーコードを登録
+    const offset = props.keymap.matrix.cols * currentKey.matrix[0] + currentKey.matrix[1];
+    const newKeymap = { ...keymap };
+    newKeymap[layer][offset] = keycode;
+    setKeymap(newKeymap);
+    sendKeycode(layer, currentKey.matrix[0], currentKey.matrix[1], keycode);
+
+    // 次のキーに移動
+    moveToNextKey(keys);
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!captureMode) return;
@@ -175,9 +203,13 @@ export function LayerEditor(props: {
             event.location === 2 ? modValue | ModifierBit.UseRight : modValue;
 
           setActiveModifiers((prev) => new Set([...prev, finalModValue]));
+          setModifierOnlyPress(true);
         }
         return;
       }
+
+      // 修飾キー以外のキーが押されたらmodifierOnlyPressをfalseに
+      setModifierOnlyPress(false);
 
       const keycode = props.keycodeConverter.convertKeyEventToKeycode(event);
       if (!keycode) return;
@@ -261,32 +293,56 @@ export function LayerEditor(props: {
 
     const handleKeyUp = (event: KeyboardEvent) => {
       if (!captureMode) return;
-
       event.preventDefault();
 
-      // 修飾キーの場合のみ処理
       if (isModifierEvent(event)) {
         const modValue =
-          event.key === "Control"
-            ? ModifierBit.Ctrl
-            : event.key === "Shift"
-            ? ModifierBit.Shift
-            : event.key === "Alt"
-            ? ModifierBit.Alt
-            : event.key === "Meta"
-            ? ModifierBit.GUI
-            : 0;
+          event.key === "Control" ? ModifierBit.Ctrl :
+          event.key === "Shift" ? ModifierBit.Shift :
+          event.key === "Alt" ? ModifierBit.Alt :
+          event.key === "Meta" ? ModifierBit.GUI : 0;
 
         if (modValue !== 0) {
-          // 右修飾キーの場合はUseRightフラグを追加
-          const finalModValue =
-            event.location === 2 ? modValue | ModifierBit.UseRight : modValue;
+          const isRight = event.location === 2;
 
-          setActiveModifiers((prev) => {
-            const next = new Set(prev);
-            next.delete(finalModValue);
-            return next;
-          });
+          // activeModifiersから現在のキーを除外した状態を計算
+          const nextModifiers = new Set(activeModifiers);
+          nextModifiers.delete(modValue | (isRight ? ModifierBit.UseRight : 0));
+
+          // 修飾キーのみが押されていて、かつ他の修飾キーが押されていない場合のみ処理
+          if (modifierOnlyPress && currentKeyIndex !== -1 && nextModifiers.size === 0) {
+            const keys = convertToKeymapKeys(
+              props.keymap,
+              layoutOption,
+              keymap[layer],
+              encodermap[layer] ?? [[]],
+              props.keycodeConverter
+            );
+
+            const currentKey = keys[currentKeyIndex];
+            if (currentKey) {
+              const baseValue = isRight ? 228 : 224;
+              const keycode = 
+                modValue === ModifierBit.Ctrl ? baseValue :
+                modValue === ModifierBit.Shift ? baseValue + 1 :
+                modValue === ModifierBit.Alt ? baseValue + 2 :
+                modValue === ModifierBit.GUI ? baseValue + 3 :
+                0;
+
+              if (keycode !== 0) {
+                const offset = props.keymap.matrix.cols * currentKey.matrix[0] + currentKey.matrix[1];
+                const newKeymap = { ...keymap };
+                newKeymap[layer][offset] = keycode;
+                setKeymap(newKeymap);
+                sendKeycode(layer, currentKey.matrix[0], currentKey.matrix[1], keycode);
+
+                moveToNextKey(keys);
+              }
+            }
+          }
+
+          // ここで修飾キーの状態を更新
+          setActiveModifiers(nextModifiers);
         }
       }
     };
@@ -300,7 +356,7 @@ export function LayerEditor(props: {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [captureMode, currentKeyIndex, layer, keymap, encodermap, activeModifiers]);
+  }, [captureMode, currentKeyIndex, layer, keymap, encodermap, activeModifiers, modifierOnlyPress]);
 
   useEffect(() => {
     if (captureMode) {
@@ -326,6 +382,30 @@ export function LayerEditor(props: {
       setCurrentKeyIndex(-1);
     }
   }, [captureMode]);
+
+  // 次のキーに移動する関数を抽出
+  const moveToNextKey = (keys: KeymapKeyProperties[]) => {
+    const sortedKeys = sortByMatrix(keys.filter(k => !k.isEncoder));
+    const currentKey = keys[currentKeyIndex];
+    const currentMatrixKey = sortedKeys.find(k => 
+      k.matrix[0] === currentKey.matrix[0] && 
+      k.matrix[1] === currentKey.matrix[1]
+    );
+    const currentSortedIndex = sortedKeys.indexOf(currentMatrixKey!);
+    
+    if (currentSortedIndex < sortedKeys.length - 1) {
+      const nextKey = sortedKeys[currentSortedIndex + 1];
+      const nextIndex = keys.findIndex(k => 
+        k.matrix[0] === nextKey.matrix[0] && 
+        k.matrix[1] === nextKey.matrix[1]
+      );
+      setCurrentKeyIndex(nextIndex);
+    } else {
+      setCurrentKeyIndex(-1);
+      setCaptureMode(false);
+      setActiveModifiers(new Set());
+    }
+  };
 
   return (
     <>
