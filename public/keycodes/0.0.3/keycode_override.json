@@ -249,6 +249,57 @@
       "KC_SLSH"
     ]
   },
+  "75": {
+    "group": "basic",
+    "key": "KC_PAGE_UP",
+    "label": "Page Up",
+    "aliases": [
+      "KC_PGUP",
+      "PageUp"
+    ]
+  },
+  "78": {
+    "group": "basic",
+    "key": "KC_PAGE_DOWN",
+    "label": "Page Down",
+    "aliases": [
+      "KC_PGDN",
+      "PageDown"
+    ]
+  },
+  "79": {
+    "group": "basic",
+    "key": "KC_RIGHT",
+    "label": "Right",
+    "aliases": [
+      "KC_RGHT",
+      "ArrowRight"
+    ]
+  },
+  "80": {
+    "group": "basic",
+    "key": "KC_LEFT",
+    "label": "Left",
+    "aliases": [
+      "ArrowLeft"
+    ]
+  },
+  "81": {
+    "group": "basic",
+    "key": "KC_DOWN",
+    "label": "Down",
+    "aliases": [
+      "ArrowDown"
+    ]
+  },
+  "82": {
+    "group": "basic",
+    "key": "KC_UP",
+    "label": "Up",
+    "aliases": [
+      "ArrowUp"
+    ]
+  },
   "100": {
     "group": "basic",
     "key": "KC_NONUS_BACKSLASH",
@@ -314,7 +365,8 @@
     "key": "KC_LANGUAGE_1",
     "label": "LANG 1",
     "aliases": [
-      "KC_LNG1"
+      "KC_LNG1",
+      "LANG1"
     ],
     "language": {
       "japanese": {
@@ -327,7 +379,8 @@
     "key": "KC_LANGUAGE_2",
     "label": "LANG 2",
     "aliases": [
-      "KC_LNG2"
+      "KC_LNG2",
+      "LANG2"
     ],
     "language": {
       "japanese": {

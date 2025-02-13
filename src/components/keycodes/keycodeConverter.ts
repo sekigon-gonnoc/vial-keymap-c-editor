@@ -525,6 +525,14 @@ export class KeycodeConverter {
   }
 
   public convertKeyEventToKeycode(event: KeyboardEvent): QmkKeycode {
-    return this.tapKeycodeList.find((k) => k.label === event.key.toUpperCase()) ?? DefaultQmkKeycode;
+    const keycode = (event.key === "Unidentified" ? event.code : event.key).toUpperCase();
+    return (
+      this.tapKeycodeList.find(
+        (k) =>
+          k.label.toUpperCase() === keycode ||
+          k.aliases?.some((a) => a.toUpperCase() === keycode) ||
+          k.shiftedLabel?.toUpperCase() === keycode
+      ) ?? DefaultQmkKeycode
+    );
   }
 }
