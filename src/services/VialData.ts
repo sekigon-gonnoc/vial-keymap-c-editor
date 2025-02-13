@@ -158,7 +158,7 @@ export class VialData implements IVialData {
     return {
       tapdance: this.keymap.tapDanceEntries.length,
       combo: this.keymap.comboEntries.length,
-      override: this.keymap.dynamicOverrideCount,
+      override: this.keymap.keyOverrideEntries.length,
     };
   }
 
@@ -168,7 +168,7 @@ export class VialData implements IVialData {
       macro: this.keymap.macroEntries.length,
       tapdance: this.keymap.tapDanceEntries.length,
       combo: this.keymap.comboEntries.length,
-      override: this.keymap.dynamicOverrideCount,
+      override: this.keymap.keyOverrideEntries.length,
     };
   }
 
@@ -379,19 +379,29 @@ export class VialData implements IVialData {
       options: number;
     }[]
   > {
-    return ids.map(() => ({
-      trigger: 0,
-      replacement: 0,
-      layers: 0,
-      triggerMods: 0,
-      negativeModMask: 0,
-      suppressedMods: 0,
-      options: 0,
-    }));
+    if (!this.keycodeConverter) {
+      throw new Error("KeycodeConverter is not initialized");
+    }
+
+    return ids
+      .filter((id) => id < this._keymap.keyOverrideEntries.length)
+      .map((id) => ({
+        trigger:
+          this.qmkKeycodes[this._keymap.keyOverrideEntries[id].trigger].value ??
+          0,
+        replacement:
+          this.qmkKeycodes[this._keymap.keyOverrideEntries[id].replacement]
+            .value ?? 0,
+        layers: this._keymap.keyOverrideEntries[id].layers,
+        triggerMods: this._keymap.keyOverrideEntries[id].triggerMods,
+        negativeModMask: this._keymap.keyOverrideEntries[id].negativeModMask,
+        suppressedMods: this._keymap.keyOverrideEntries[id].suppressedMods,
+        options: this._keymap.keyOverrideEntries[id].options,
+      }));
   }
 
   async SetOverride(
-    _values: {
+    values: {
       id: number;
       trigger: number;
       replacement: number;
@@ -401,7 +411,28 @@ export class VialData implements IVialData {
       suppressedMods: number;
       options: number;
     }[]
-  ): Promise<void> {}
+  ): Promise<void> {
+    if (!this.keycodeConverter) {
+      throw new Error("KeycodeConverter is not initialized");
+    }
+
+    values.forEach((value) => {
+      if (value.id >= this._keymap.keyOverrideEntries.length) {
+        return;
+      }
+      this._keymap.keyOverrideEntries[value.id] = {
+        trigger: this.keycodeConverter!.convertIntToKeycode(value.trigger).key,
+        replacement: this.keycodeConverter!.convertIntToKeycode(
+          value.replacement
+        ).key,
+        layers: value.layers,
+        triggerMods: value.triggerMods,
+        negativeModMask: value.negativeModMask,
+        suppressedMods: value.suppressedMods,
+        options: value.options,
+      };
+    });
+  }
 
   async GetQuantumSettingsValue(
     _id: number[]

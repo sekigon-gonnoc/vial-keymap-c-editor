@@ -2,6 +2,7 @@ import { ComboEntry, generateComboEntries, parseComboEntries } from "./comboPars
 import { EncoderEntry, generateEncoderEntries, parseEncoderEntries } from "./encoderParser";
 import { generateMacroEntries, parseMacroEntries } from "./macroParser";
 import { generateTapDanceEntries, parseTapDanceEntries, TapDanceEntry } from "./tapDanceParser";
+import { KeyOverrideEntry, generateKeyOverrideEntries, parseKeyOverrideEntries } from "./keyoverrideParser";
 
 export interface KeymapKey {
     keycode: string;  // キーコード (例: "KC_A")
@@ -28,10 +29,10 @@ export interface QmkKeymap {
     tapDanceEntries: TapDanceEntry[];
     comboEntries: ComboEntry[];
     macroEntries: number[];  // マクロバッファのバイト配列
-    dynamicOverrideCount: number;
     userIncludes?: string;  // ユーザー定義インクルード部分
     userCode?: string;      // ユーザー定義コード部分
-    encoderEntries: EncoderEntry[][];
+    encoderEntries: EncoderEntry[][]; // エンコーダーマップ
+    keyOverrideEntries: KeyOverrideEntry[]; // キーオーバーライドエントリ
 }
 
 
@@ -234,6 +235,7 @@ export function parseKeymapC(
     encoderCount,
     dynamicLayerCount
   );
+  const keyOverrideEntries = parseKeyOverrideEntries(content, dynamicOverrideCount);
 
   // 各セクションを解析
   const layers = parseKeymap(
@@ -254,7 +256,6 @@ export function parseKeymapC(
     layout: defaultLayoutName,
     layers,
     dynamicLayerCount,
-    dynamicOverrideCount,
     dynamicMacroCount: 32,
     tapDanceEntries,
     comboEntries,
@@ -262,6 +263,7 @@ export function parseKeymapC(
     userIncludes,
     userCode,
     encoderEntries,
+    keyOverrideEntries,
   };
 }
 
@@ -301,6 +303,8 @@ export function generateKeymapC(keymap: QmkKeymap): string {
     output += "/* USER INCLUDE BEGIN */";
     output += keymap.userIncludes ?? "";
     output += "/* USER INCLUDE END */\n\n";
+
+    output += "/* GENERATED CODE BEGIN */\n\n";
 
     // キーマップ定義
     output += `const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -342,6 +346,9 @@ export function generateKeymapC(keymap: QmkKeymap): string {
     // Macro定義の生成
     output += generateMacroEntries(keymap.macroEntries);
 
+    // Key Override定義の生成を追加
+    output += generateKeyOverrideEntries(keymap.keyOverrideEntries);
+
     // 初期化コード
     output += `
 // Initialize Vial dynamic items
@@ -357,11 +364,19 @@ void                       eeconfig_init_user(void) {
         dynamic_keymap_set_combo(i, &default_combo_entries[i]);
     }
 #endif
+#if VIAL_KEY_OVERRIDE_ENTRIES > 0
+    for (size_t i = 0; i < sizeof(default_key_override_entries) / sizeof(default_key_override_entries[0]); ++i) {
+        dynamic_keymap_set_key_override(i, &default_key_override_entries[i]);
+    }
+#endif
     uint16_t const macro_buffer_size = MIN(sizeof(default_macro_buffer), dynamic_keymap_macro_get_buffer_size());
     dynamic_keymap_macro_set_buffer(0, macro_buffer_size, (uint8_t *)default_macro_buffer);
 
     eeconfig_init_user_manual();
 }`;
+
+    output += "\n\n/* GENERATED CODE BEGIN */\n\n";
+
 
     // ユーザーコード部分
         output += "\n/* USER CODE BEGIN */";

@@ -6,7 +6,7 @@ import { KeycodeCatalog } from "./KeycodeCatalog";
 import { KeycodeConverter } from "./keycodes/keycodeConverter";
 import "../App.css";
 import { MacroEditor } from "./MacroEditor";
-// import { OverrideEditor } from "./OverrideEditor";
+import { OverrideEditor } from "./OverrideEditor";
 import { TapDanceEditor } from "./TapDanceEditor";
 import { LayerEditor } from "./keymap/LayerEditor";
 import { KeymapProperties } from "./keymap/KeymapTypes";
@@ -50,7 +50,7 @@ export function KeymapEditor(props: {
   const [tdIndex, setTdIndex] = useState(-1);
   const [macroIndex, setMacroIndex] = useState(-1);
   const [comboIndex, setComboIndex] = useState(-1);
-  const [_overrideIndex, setOverrideIndex] = useState(-1);
+  const [overrideIndex, setOverrideIndex] = useState(-1);
   const [lang, setLang] = useState("US");
   const [keycodeConverter, setKeycodeConverter] = useState<KeycodeConverter>();
 
@@ -112,8 +112,7 @@ export function KeymapEditor(props: {
           }}
         ></ComboEditor>
       </Box>
-      {/* TODO: override */}
-      {/* <Box hidden={menuType !== "override"}>
+      <Box hidden={menuType !== "override"}>
         <OverrideEditor
           via={props.via}
           keycodeConverter={keycodeConverter}
@@ -123,7 +122,7 @@ export function KeymapEditor(props: {
             setMenuType("layer");
           }}
         ></OverrideEditor>
-      </Box> */}
+      </Box>
       <Box>
         <LanguageSelector
           languageList={["US", "Japanese"]}
@@ -142,9 +141,7 @@ export function KeymapEditor(props: {
           { label: "Layer", keygroup: ["layer"] },
           { label: "Macro", keygroup: ["macro"] },
           { label: "TapDance", keygroup: ["tapdance"] },
-          // TODO: override
-          // { label: "Combo/Override", keygroup: ["combo", "keyoverride"] },
-          { label: "Combo", keygroup: ["combo"] },
+          { label: "Combo/Override", keygroup: ["combo", "keyoverride"] },
         ]}
         comboCount={props.dynamicEntryCount.combo}
         overrideCount={props.dynamicEntryCount.override}

@@ -45,7 +45,7 @@ function App() {
               macro: vialData.keymap.dynamicMacroCount,
               tapdance: vialData.keymap.tapDanceEntries.length,
               combo: vialData.keymap.comboEntries.length,
-              override: vialData.keymap.dynamicOverrideCount,
+              override: vialData.keymap.keyOverrideEntries.length,
             }}
           />
         </>
