@@ -1,11 +1,11 @@
 export interface KeyOverrideEntry {
-  triggerMods: number;
-  layers: number;
   trigger: string;        // trigger keycode
-  replacement: string;     // replacement keycode
-  suppressedMods: number;
-  options: number;
-  negativeModMask: number;
+  replacement: string;    // replacement keycode
+  layers: number;         // layer mask
+  triggerMods: number;    // trigger mods (uint8_t)
+  negativeModMask: number;// negative mod mask (uint8_t)
+  suppressedMods: number; // suppressed mods (uint8_t)
+  options: number;        // options (uint8_t)
 }
 
 const modMaskMap: { [key: string]: number } = {
@@ -77,92 +77,85 @@ export function parseKeyOverrideEntries(
   dynamicOverrideCount: number
 ): KeyOverrideEntry[] {
   const defaultEntry: KeyOverrideEntry = {
-    triggerMods: 0,
     trigger: "KC_NO",
     replacement: "KC_NO",
     layers: 0xffff,
+    triggerMods: 0,
+    negativeModMask: 0,
     suppressedMods: 0,
-    options: 0,
-    negativeModMask: 0
+    options: 0
   };
 
   const entries: KeyOverrideEntry[] = Array(dynamicOverrideCount).fill(null).map(() => ({...defaultEntry}));
 
-  // const key_override_t default_key_override[]の定義を探す
-  const koArrayMatch = content.match(/const\s+key_override_t\s+(?:PROGMEM\s+)?default_key_override_entries\[\]\s*=\s*\{([^}]+)\};/);
+  // 構造体配列定義を探す（コメントや改行を含む形式に対応）
+  const koArrayMatch = content.match(
+    /(?:\/\/[^\n]*\n)*const\s+vial_key_override_entry_t\s+(?:PROGMEM\s+)?default_key_override_entries\[\]\s*=\s*\{([\s\S]*?)\}\s*;/
+  );
   if (!koArrayMatch) return entries;
 
+  // エントリを行単位で分割して解析
   const koContent = koArrayMatch[1];
-  let currentPos = 0;
+  const entryLines = koContent.split(/},?\s*\n\s*/);
   let currentIndex = 0;
-  let depth = 0;
 
-  // ko_make_with_layers_negmods_and_options呼び出しを解析
-  while (currentIndex < dynamicOverrideCount) {
-    const startPos = koContent.indexOf('ko_make_with_layers_negmods_and_options', currentPos);
-    if (startPos === -1) break;
+  for (const entryLine of entryLines) {
+    if (currentIndex >= dynamicOverrideCount) break;
+    if (!entryLine.trim()) continue;
 
-    // 括弧の対応を考慮して引数部分を抽出
-    let endPos = startPos;
-    depth = 0;
-    for (let i = startPos; i < koContent.length; i++) {
-      if (koContent[i] === '(') depth++;
-      else if (koContent[i] === ')') {
-        depth--;
-        if (depth === 0) {
-          endPos = i + 1;
-          break;
-        }
-      }
-    }
-    if (depth !== 0) break;
+    // 構造体の開始部分を探す
+    const struct = entryLine.match(/\{\s*([^}]+)/);
+    if (!struct) continue;
 
-    // 引数を括弧の対応を考慮して分割
-    const call = koContent.slice(startPos, endPos);
-    const argsStart = call.indexOf('(') + 1;
-    const argsContent = call.slice(argsStart, -1);
-    
-    const args: string[] = [];
-    let currentArg = '';
-    depth = 0;
+    // フィールドを括弧の対応を考慮して分割
+    const contentStr = struct[1];
+    const fields: string[] = [];
+    let currentField = '';
+    let depth = 0;
 
-    for (let i = 0; i < argsContent.length; i++) {
-      const char = argsContent[i];
+    for (let i = 0; i < contentStr.length; i++) {
+      const char = contentStr[i];
       if (char === '(' || char === '{') {
         depth++;
-        currentArg += char;
+        currentField += char;
       } else if (char === ')' || char === '}') {
         depth--;
-        currentArg += char;
+        currentField += char;
       } else if (char === ',' && depth === 0) {
-        args.push(currentArg.trim());
-        currentArg = '';
-      } else {
-        currentArg += char;
+        // コメントを除去して追加
+        const fieldWithoutComment = currentField.replace(/\/\/.*$/, '').trim();
+        if (fieldWithoutComment) {
+          fields.push(fieldWithoutComment);
+        }
+        currentField = '';
+      } else if (!char.match(/^\s*\/\//)) { // コメント行をスキップ
+        currentField += char;
       }
     }
-    if (currentArg.trim()) {
-      args.push(currentArg.trim());
+    // 最後のフィールドを追加
+    if (currentField.trim()) {
+      const fieldWithoutComment = currentField.replace(/\/\/.*$/, '').trim();
+      if (fieldWithoutComment) {
+        fields.push(fieldWithoutComment);
+      }
     }
 
-    if (args.length >= 6) {
+    if (fields.length >= 7) {
       try {
         entries[currentIndex] = {
-          triggerMods: parseModMask(args[0]),
-          trigger: args[1],
-          replacement: args[2],
-          layers: parseInt(args[3]),
-          negativeModMask: parseModMask(args[4]),
-          options: parseOptions(args[5]),
-          suppressedMods: 0
+          trigger: fields[0],
+          replacement: fields[1],
+          layers: parseInt(fields[2], 16),
+          triggerMods: parseModMask(fields[3]),
+          negativeModMask: parseModMask(fields[4]),
+          suppressedMods: parseModMask(fields[5]),
+          options: parseOptions(fields[6])
         };
         currentIndex++;
       } catch (e) {
         console.error(e);
       }
     }
-
-    currentPos = endPos;
   }
 
   return entries;
@@ -172,17 +165,18 @@ export function generateKeyOverrideEntries(entries: KeyOverrideEntry[]): string 
   if (entries.length === 0) return '';
 
   let output = '\n// Key Override definitions\n';
-  output += 'const key_override_t default_key_override_entries[] = {\n';
+  output += 'const vial_key_override_entry_t default_key_override_entries[] = {\n';
   
   entries.forEach((entry, index) => {
-    output += '    ko_make_with_layers_negmods_and_options(\n';
-    output += `        ${generateModMask(entry.triggerMods)}, // trigger mods\n`;
+    output += '    {\n';
     output += `        ${entry.trigger}, // trigger key\n`;
     output += `        ${entry.replacement}, // replacement key\n`;
     output += `        0x${entry.layers.toString(16).padStart(4, '0')}, // layer mask\n`;
+    output += `        ${generateModMask(entry.triggerMods)}, // trigger mods\n`;
     output += `        ${generateModMask(entry.negativeModMask)}, // negative mod mask\n`;
+    output += `        ${generateModMask(entry.suppressedMods)}, // suppressed mods\n`;
     output += `        ${generateOptions(entry.options)} // options\n`;
-    output += '    )';
+    output += '    }';
     if (index < entries.length - 1) output += ',';
     output += '\n';
   });
