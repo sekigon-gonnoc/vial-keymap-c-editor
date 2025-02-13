@@ -391,13 +391,13 @@ export class KeycodeConverter {
           const modLabel = modStringShort((val >> 8) & 0x1f);
           const modLongLabel = modStringLong((val >> 8) & 0x1f);
           const baseKeycode = this.convertIntToKeycode(val & 0xff);
-          return {
+            return {
             value: val,
-            key: `MODS(${modLongLabel},${baseKeycode.key})`,
+            key: `(${modLongLabel.replace(/MOD_/g, 'QK_')}|${baseKeycode.key})`,
             modLabel: modLabel,
             label: baseKeycode.label,
             shiftedLabel: baseKeycode.shiftedLabel,
-          };
+            };
         }
       )
       .with(
