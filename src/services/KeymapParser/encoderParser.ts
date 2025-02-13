@@ -8,74 +8,108 @@ export function parseEncoderEntries(
   encoderCount: number,
   dynamicLayerCount: number
 ): EncoderEntry[][] {
-  const encoders: EncoderEntry[][] = [];
+  // デフォルト値を準備
+  const defaultEntry: EncoderEntry = {
+    ccw: "KC_TRANSPARENT",
+    cw: "KC_TRANSPARENT"
+  };
+  const encoders: EncoderEntry[][] = Array(dynamicLayerCount)
+    .fill(null)
+    .map(() => Array(encoderCount).fill(null).map(() => ({...defaultEntry})));
 
   // encoder_mapの定義を探す
   const encoderMatch = content.match(
     /const\s+uint16_t\s+(?:PROGMEM\s+)?encoder_map\[[\s\S]*?\]\[[\s\S]*?\]\[[\s\S]*?\]\s*=\s*\{([\s\S]*?)\};/
   );
-
-  if (!encoderMatch) {
-    // デフォルト値を返す
-    return Array(dynamicLayerCount)
-      .fill(null)
-      .map(() =>
-        Array(encoderCount)
-          .fill(null)
-          .map(() => ({
-            ccw: "KC_TRANSPARENT",
-            cw: "KC_TRANSPARENT",
-          }))
-      );
-  }
+  if (!encoderMatch) return encoders;
 
   const encoderContent = encoderMatch[1];
-  const layerBlocks = encoderContent
-    .split(/\},\s*\{|\},|\{/)
-    .filter((block) => block.trim());
+  let pos = 0;
 
-  layerBlocks.forEach((layerBlock) => {
-    const encoderLayer: EncoderEntry[] = [];
-    const encoderPairs = layerBlock
-      .split(/\},\s*\{|\},|\{/)
-      .filter((pair) => pair.trim());
+  // レイヤー定義を探す
+  while (pos < encoderContent.length) {
+    // レイヤー番号を探す
+    const layerMatch = encoderContent.slice(pos).match(/\[\s*(\d+)\s*\]\s*=\s*\{/);
+    if (!layerMatch) break;
 
-    encoderPairs.forEach((pair) => {
-      const values = pair
-        .split(",")
-        .map((v) => v.trim().replace(/[{}]/g, "")) // 波括弧を除去
-        .filter((v) => v)
-        .map(v => v.trim()); // 再度trimを行い余分な空白を除去
-      if (values.length >= 2) {
-        encoderLayer.push({
-          ccw: values[0],
-          cw: values[1],
-        });
+    const layerIndex = parseInt(layerMatch[1]);
+    if (layerIndex >= dynamicLayerCount) {
+      pos += layerMatch.index! + layerMatch[0].length;
+      continue;
+    }
+
+    // レイヤーの終わりを探す（括弧の対応を考慮）
+    const layerStart = pos + layerMatch.index! + layerMatch[0].length;
+    let depth = 1;
+    let layerEnd = layerStart;
+
+    for (let i = layerStart; i < encoderContent.length; i++) {
+      if (encoderContent[i] === '{') depth++;
+      else if (encoderContent[i] === '}') {
+        depth--;
+        if (depth === 0) {
+          layerEnd = i;
+          break;
+        }
       }
+    }
+
+    const layerContent = encoderContent.slice(layerStart, layerEnd);
+    let encoderIndex = 0;
+
+    // エンコーダー定義を探す
+    const encoderPairs = [];
+    depth = 0;
+    let start = 0;
+
+    for (let i = 0; i < layerContent.length; i++) {
+      const char = layerContent[i];
+      if (char === '{') {
+        if (depth === 0) start = i;
+        depth++;
+      } else if (char === '}') {
+        depth--;
+        if (depth === 0) {
+          encoderPairs.push(layerContent.slice(start, i + 1));
+        }
+      }
+    }
+
+    // 各エンコーダーの設定をパース
+    encoderPairs.forEach(pair => {
+      if (encoderIndex >= encoderCount) return;
+
+      // 波括弧の中身を取り出し、括弧のネストを考慮してカンマで分割
+      const innerPair = pair.trim();
+      if (!innerPair.startsWith('{') || !innerPair.endsWith('}')) return;
+      
+      const content = innerPair.slice(1, -1);
+      let depth = 0;
+      let commaPos = -1;
+
+      // ネストを考慮してカンマの位置を探す
+      for (let i = 0; i < content.length; i++) {
+        const char = content[i];
+        if (char === '(' || char === '{') {
+          depth++;
+        } else if (char === ')' || char === '}') {
+          depth--;
+        } else if (char === ',' && depth === 0) {
+          commaPos = i;
+          break;
+        }
+      }
+
+      if (commaPos !== -1) {
+        const ccw = content.slice(0, commaPos).trim();
+        const cw = content.slice(commaPos + 1).trim();
+        encoders[layerIndex][encoderIndex] = { ccw, cw };
+      }
+      
+      encoderIndex++;
     });
 
-    if (encoderLayer.length > 0) {
-      // 不足分を補完
-      while (encoderLayer.length < encoderCount) {
-        encoderLayer.push({
-          ccw: "KC_TRANSPARENT",
-          cw: "KC_TRANSPARENT",
-        });
-      }
-      encoders.push(encoderLayer);
-    }
-  });
-
-  // レイヤー数を32に揃える
-  while (encoders.length < dynamicLayerCount) {
-    encoders.push(
-      Array(encoderCount)
-        .fill(null)
-        .map(() => ({
-          ccw: "KC_TRANSPARENT",
-          cw: "KC_TRANSPARENT",
-        }))
-    );
+    pos = layerEnd + 1;
   }
 
   return encoders;
