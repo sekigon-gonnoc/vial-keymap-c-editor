@@ -136,45 +136,39 @@ export function KeymapKey(props: KeymapKeyProperties) {
   );
 }
 
-export function KeymapLayer(props: {
+export interface KeymapLayerProps {
   keymapProps: KeymapProperties;
   layoutOption: { [layout: number]: number };
   keymap: number[];
   encodermap: number[][];
   keycodeconverter: KeycodeConverter;
   highlightIndex?: number;
-  onKeycodeChange?: (
-    target: KeymapKeyProperties,
-    newKeycode: QmkKeycode
-  ) => void;
-}) {
+  fastMode?: boolean;  // Add this prop
+  onKeycodeChange?: (target: KeymapKeyProperties, newKeycode: QmkKeycode) => void;
+  onKeyClick?: (index: number) => void;  // Add this prop
+}
+
+export function KeymapLayer(props: KeymapLayerProps) {
   const [popupOpen, setpopupOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | undefined>(undefined);
-  const [focusedKey, setFocusedKey] = useState<KeymapKeyProperties | undefined>(
-    undefined
-  );
-  const [candidateKeycode, setCandidateKeycode] =
-    useState<QmkKeycode>(DefaultQmkKeycode);
+  const [focusedKey, setFocusedKey] = useState<KeymapKeyProperties | undefined>(undefined);
+  const [candidateKeycode, setCandidateKeycode] = useState<QmkKeycode>(DefaultQmkKeycode);
 
   const keymapkeys = convertToKeymapKeys(
     props.keymapProps,
     props.layoutOption,
     props.keymap,
     props.encodermap,
-    props.keycodeconverter
+    props.keycodeconverter,
   );
 
   return (
     <>
-      <div
-        style={{
-          position: "relative",
-          marginTop: 50,
-          height: `${
-            (Math.max(...keymapkeys.map((k) => k.y)) + 1) * WIDTH_1U
-          }px`,
-        }}
-      >
+      <div style={{
+        position: "relative",
+        marginTop: 50,
+        height: `${(Math.max(...keymapkeys.map((k) => k.y)) + 1) * WIDTH_1U}px`,
+      }}>
         {keymapkeys.map((p, idx) => (
           <KeymapKey
             key={idx}
@@ -182,10 +176,14 @@ export function KeymapLayer(props: {
             className={idx === props.highlightIndex ? "highlight-next" : ""}
             onKeycodeChange={props.onKeycodeChange}
             onClick={(target) => {
-              setCandidateKeycode(p.keycode);
-              setFocusedKey(p);
-              setpopupOpen(true);
-              setAnchorEl(target);
+              if (props.fastMode) {
+                props.onKeyClick?.(idx);
+              } else {
+                setCandidateKeycode(p.keycode);
+                setFocusedKey(p);
+                setpopupOpen(true);
+                setAnchorEl(target);
+              }
             }}
             reactKey={idx.toString()}
           />
@@ -202,14 +200,14 @@ export function KeymapLayer(props: {
             setpopupOpen(false);
             setAnchorEl(undefined);
             if (focusedKey) {
-              props.onKeycodeChange?.(focusedKey!, candidateKeycode);
+              props.onKeycodeChange?.(focusedKey, candidateKeycode);
             }
           }
         }}
         onChange={(event) => {
           setCandidateKeycode(event.keycode);
         }}
-      ></KeymapKeyPopUp>
+      />
     </>
   );
 }

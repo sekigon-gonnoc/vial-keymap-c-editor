@@ -380,6 +380,13 @@ export function LayerEditor(props: {
             encodermap={encodermap[layer] ?? [[]]}
             keycodeconverter={props.keycodeConverter}
             highlightIndex={currentKeyIndex}
+            fastMode={fastMode}
+            onKeyClick={(index) => {
+              // Fast Mode時はクリックでカーソル移動
+              if (fastMode) {
+                setCurrentKeyIndex(index);
+              }
+            }}
             onKeycodeChange={(target, newKeycode) => {
               if (target.isEncoder) {
                 const newencoder = { ...encodermap };
