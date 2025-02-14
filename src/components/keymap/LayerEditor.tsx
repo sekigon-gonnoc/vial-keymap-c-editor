@@ -1,4 +1,13 @@
-import { Button, FormControl, FormControlLabel, MenuItem, Select, Switch } from "@mui/material";
+import {
+  Button,
+  IconButton,
+  FormControl,
+  FormControlLabel,
+  MenuItem,
+  Select,
+  Switch,
+} from "@mui/material";
+import { Add, Remove } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import {
   DefaultQmkKeycode,
@@ -24,7 +33,9 @@ function LayoutSelector(props: {
         value={props.option[0]}
         label="layout"
         onChange={(event) =>
-          props.onChange({ 0: event.target.value } as { [layout: number]: number })
+          props.onChange({ 0: event.target.value } as {
+            [layout: number]: number;
+          })
         }
       >
         {props.layouts.labels?.[0]?.slice(1).map((label, index) => (
@@ -37,14 +48,26 @@ function LayoutSelector(props: {
   );
 }
 
-function LayerSelector(props: { layerCount: number; onChange: (layer: number) => void }) {
+function LayerSelector(props: {
+  layerCount: number;
+  onChange: (layer: number) => void;
+}) {
   return (
-    <>
+    <div style={{ display: "flex", gap: "4px" }}>
       {[...Array(props.layerCount)].map((_, idx) => {
         return (
           <Button
             key={idx}
             value={idx}
+            variant="outlined"
+            size="small"
+            sx={{
+              minWidth: "32px",
+              width: "32px",
+              height: "32px",
+              padding: 0,
+              borderRadius: "50%",
+            }}
             onClick={() => {
               props.onChange(idx);
             }}
@@ -53,7 +76,7 @@ function LayerSelector(props: { layerCount: number; onChange: (layer: number) =>
           </Button>
         );
       })}
-    </>
+    </div>
   );
 }
 
@@ -197,16 +220,17 @@ export function LayerEditor(props: {
       );
 
       // matrix順にソートしたキーリストを取得
-      const sortedKeys = sortByMatrix(keys.filter(k => !k.isEncoder));
+      const sortedKeys = sortByMatrix(keys.filter((k) => !k.isEncoder));
 
       // 最初のキー選択
       if (currentKeyIndex === -1) {
         if (sortedKeys.length > 0) {
           // matrix順の最初のキーのインデックスを探す
           const firstKey = sortedKeys[0];
-          const originalIndex = keys.findIndex(k => 
-            k.matrix[0] === firstKey.matrix[0] && 
-            k.matrix[1] === firstKey.matrix[1]
+          const originalIndex = keys.findIndex(
+            (k) =>
+              k.matrix[0] === firstKey.matrix[0] &&
+              k.matrix[1] === firstKey.matrix[1]
           );
           setCurrentKeyIndex(originalIndex);
         }
@@ -243,18 +267,20 @@ export function LayerEditor(props: {
         );
 
         // 次のキーを探す
-        const currentMatrixKey = sortedKeys.find(k => 
-          k.matrix[0] === currentKey.matrix[0] && 
-          k.matrix[1] === currentKey.matrix[1]
+        const currentMatrixKey = sortedKeys.find(
+          (k) =>
+            k.matrix[0] === currentKey.matrix[0] &&
+            k.matrix[1] === currentKey.matrix[1]
         );
         const currentSortedIndex = sortedKeys.indexOf(currentMatrixKey!);
-        
+
         if (currentSortedIndex < sortedKeys.length - 1) {
           // 次のキーのインデックスを元のkeysから探す
           const nextKey = sortedKeys[currentSortedIndex + 1];
-          const nextIndex = keys.findIndex(k => 
-            k.matrix[0] === nextKey.matrix[0] && 
-            k.matrix[1] === nextKey.matrix[1]
+          const nextIndex = keys.findIndex(
+            (k) =>
+              k.matrix[0] === nextKey.matrix[0] &&
+              k.matrix[1] === nextKey.matrix[1]
           );
           setCurrentKeyIndex(nextIndex);
         } else {
@@ -271,10 +297,15 @@ export function LayerEditor(props: {
 
       if (isModifierEvent(event)) {
         const modValue =
-          event.key === "Control" ? ModifierBit.Ctrl :
-          event.key === "Shift" ? ModifierBit.Shift :
-          event.key === "Alt" ? ModifierBit.Alt :
-          event.key === "Meta" ? ModifierBit.GUI : 0;
+          event.key === "Control"
+            ? ModifierBit.Ctrl
+            : event.key === "Shift"
+            ? ModifierBit.Shift
+            : event.key === "Alt"
+            ? ModifierBit.Alt
+            : event.key === "Meta"
+            ? ModifierBit.GUI
+            : 0;
 
         if (modValue !== 0) {
           const isRight = event.location === 2;
@@ -284,7 +315,11 @@ export function LayerEditor(props: {
           nextModifiers.delete(modValue | (isRight ? ModifierBit.UseRight : 0));
 
           // 修飾キーのみが押されていて、かつ他の修飾キーが押されていない場合のみ処理
-          if (modifierOnlyPress && currentKeyIndex !== -1 && nextModifiers.size === 0) {
+          if (
+            modifierOnlyPress &&
+            currentKeyIndex !== -1 &&
+            nextModifiers.size === 0
+          ) {
             const keys = convertToKeymapKeys(
               props.keymap,
               layoutOption,
@@ -296,19 +331,30 @@ export function LayerEditor(props: {
             const currentKey = keys[currentKeyIndex];
             if (currentKey) {
               const baseValue = isRight ? 228 : 224;
-              const keycode = 
-                modValue === ModifierBit.Ctrl ? baseValue :
-                modValue === ModifierBit.Shift ? baseValue + 1 :
-                modValue === ModifierBit.Alt ? baseValue + 2 :
-                modValue === ModifierBit.GUI ? baseValue + 3 :
-                0;
+              const keycode =
+                modValue === ModifierBit.Ctrl
+                  ? baseValue
+                  : modValue === ModifierBit.Shift
+                  ? baseValue + 1
+                  : modValue === ModifierBit.Alt
+                  ? baseValue + 2
+                  : modValue === ModifierBit.GUI
+                  ? baseValue + 3
+                  : 0;
 
               if (keycode !== 0) {
-                const offset = props.keymap.matrix.cols * currentKey.matrix[0] + currentKey.matrix[1];
+                const offset =
+                  props.keymap.matrix.cols * currentKey.matrix[0] +
+                  currentKey.matrix[1];
                 const newKeymap = { ...keymap };
                 newKeymap[layer][offset] = keycode;
                 setKeymap(newKeymap);
-                sendKeycode(layer, currentKey.matrix[0], currentKey.matrix[1], keycode);
+                sendKeycode(
+                  layer,
+                  currentKey.matrix[0],
+                  currentKey.matrix[1],
+                  keycode
+                );
 
                 moveToNextKey(keys);
               }
@@ -330,7 +376,15 @@ export function LayerEditor(props: {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [captureMode, currentKeyIndex, layer, keymap, encodermap, activeModifiers, modifierOnlyPress]);
+  }, [
+    captureMode,
+    currentKeyIndex,
+    layer,
+    keymap,
+    encodermap,
+    activeModifiers,
+    modifierOnlyPress,
+  ]);
 
   useEffect(() => {
     if (captureMode) {
@@ -343,12 +397,13 @@ export function LayerEditor(props: {
       );
 
       // matrix順の最初のキーを選択
-      const sortedKeys = sortByMatrix(keys.filter(k => !k.isEncoder));
+      const sortedKeys = sortByMatrix(keys.filter((k) => !k.isEncoder));
       if (sortedKeys.length > 0) {
         const firstKey = sortedKeys[0];
-        const firstIndex = keys.findIndex(k => 
-          k.matrix[0] === firstKey.matrix[0] && 
-          k.matrix[1] === firstKey.matrix[1]
+        const firstIndex = keys.findIndex(
+          (k) =>
+            k.matrix[0] === firstKey.matrix[0] &&
+            k.matrix[1] === firstKey.matrix[1]
         );
         setCurrentKeyIndex(firstIndex);
       }
@@ -359,19 +414,20 @@ export function LayerEditor(props: {
 
   // 次のキーに移動する関数を抽出
   const moveToNextKey = (keys: KeymapKeyProperties[]) => {
-    const sortedKeys = sortByMatrix(keys.filter(k => !k.isEncoder));
+    const sortedKeys = sortByMatrix(keys.filter((k) => !k.isEncoder));
     const currentKey = keys[currentKeyIndex];
-    const currentMatrixKey = sortedKeys.find(k => 
-      k.matrix[0] === currentKey.matrix[0] && 
-      k.matrix[1] === currentKey.matrix[1]
+    const currentMatrixKey = sortedKeys.find(
+      (k) =>
+        k.matrix[0] === currentKey.matrix[0] &&
+        k.matrix[1] === currentKey.matrix[1]
     );
     const currentSortedIndex = sortedKeys.indexOf(currentMatrixKey!);
-    
+
     if (currentSortedIndex < sortedKeys.length - 1) {
       const nextKey = sortedKeys[currentSortedIndex + 1];
-      const nextIndex = keys.findIndex(k => 
-        k.matrix[0] === nextKey.matrix[0] && 
-        k.matrix[1] === nextKey.matrix[1]
+      const nextIndex = keys.findIndex(
+        (k) =>
+          k.matrix[0] === nextKey.matrix[0] && k.matrix[1] === nextKey.matrix[1]
       );
       setCurrentKeyIndex(nextIndex);
     } else {
@@ -383,127 +439,157 @@ export function LayerEditor(props: {
 
   return (
     <>
-      <div>
-        <LayoutSelector
-          via={props.via}
-          layouts={props.keymap.layouts}
-          option={layoutOption}
-          onChange={(option) => {
-            setLayoutOption(option);
-            sendLayout(option[0]);
-          }}
-        />
-        <LayerSelector
-          layerCount={props.layerCount}
-          onChange={async (layer) => {
-            if (!Object.keys(keymap).includes(layer.toString())) {
-              const layerKeys = await props.via.GetLayer(layer, {
-                rows: props.keymap.matrix.rows,
-                cols: props.keymap.matrix.cols,
-              });
-              const newKeymap = { ...keymap };
-              newKeymap[layer] = layerKeys;
-              setKeymap(newKeymap);
-              console.log(`load keymap ${layer}`);
-              console.log(layerKeys);
-
-              setEncodermap({
-                ...encodermap,
-                [layer]: await props.via.GetEncoder(layer, encoderCount),
-              });
-            }
-            setLayer(layer);
-          }}
-        ></LayerSelector>
-        <Button
-          onClick={async () => {
-            const current = await props.via.GetDynamicEntryCountAll();
-            props.onDynamicEntryCountChange({
-              ...current,
-              layer: current.layer + 1,
-            });
-          }}
-        >
-         Increment Layer
-        </Button>
-        <Button
-          onClick={async () => {
-            const current = await props.via.GetDynamicEntryCountAll();
-            props.onDynamicEntryCountChange({
-              ...current,
-              layer: current.layer - 1,
-            });
-          }}
-        >
-         Decrement Layer
-        </Button>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={captureMode}
-              onChange={(e) => {
-                setCaptureMode(e.target.checked);
-              }}
-            />
-          }
-          label="Key Capture Mode"
-        />
-        {Object.keys(keymap).includes(layer.toString()) ? (
-          <KeymapLayer
-            keymapProps={props.keymap}
-            layoutOption={layoutOption}
-            keymap={keymap[layer]}
-            encodermap={encodermap[layer] ?? [[]]}
-            keycodeconverter={props.keycodeConverter}
-            highlightIndex={currentKeyIndex}
-            captureMode={captureMode}
-            onKeyClick={(index) => {
-              // Key Capture Mode時はクリックでカーソル移動
-              if (captureMode) {
-                setCurrentKeyIndex(index);
-              }
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          marginBottom: "8px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <LayoutSelector
+            via={props.via}
+            layouts={props.keymap.layouts}
+            option={layoutOption}
+            onChange={(option) => {
+              setLayoutOption(option);
+              sendLayout(option[0]);
             }}
-            onKeycodeChange={(target, newKeycode) => {
-              if (target.isEncoder) {
-                const newencoder = { ...encodermap };
-                newencoder[layer][target.matrix[0]] =
-                  target.matrix[1] == 0
-                    ? [newKeycode.value, encodermap[layer][target.matrix[0]][1]]
-                    : [
-                        encodermap[layer][target.matrix[0]][0],
-                        newKeycode.value,
-                      ];
-                setEncodermap(newencoder);
-                sendEncoder(
-                  layer,
-                  target.matrix[0],
-                  target.matrix[1],
-                  newKeycode.value
-                );
-                console.log(`update encoder`);
-              } else {
-                const offset =
-                  props.keymap.matrix.cols * target.matrix[0] +
-                  target.matrix[1];
+          />
+          <LayerSelector
+            layerCount={props.layerCount}
+            onChange={async (layer) => {
+              if (!Object.keys(keymap).includes(layer.toString())) {
+                const layerKeys = await props.via.GetLayer(layer, {
+                  rows: props.keymap.matrix.rows,
+                  cols: props.keymap.matrix.cols,
+                });
                 const newKeymap = { ...keymap };
-                newKeymap[layer][offset] = newKeycode.value;
+                newKeymap[layer] = layerKeys;
                 setKeymap(newKeymap);
-                sendKeycode(
-                  layer,
-                  target.matrix[0],
-                  target.matrix[1],
-                  newKeycode.value
-                );
-                console.log(
-                  `update ${layer},${target.matrix[0]},${target.matrix[1]} to ${newKeycode.value}`
-                );
+                console.log(`load keymap ${layer}`);
+                console.log(layerKeys);
+
+                setEncodermap({
+                  ...encodermap,
+                  [layer]: await props.via.GetEncoder(layer, encoderCount),
+                });
               }
+              setLayer(layer);
             }}
-          ></KeymapLayer>
-        ) : (
-          <></>
-        )}
+          />
+        </div>
+        <div
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <IconButton
+            size="small"
+            sx={{
+              minWidth: "32px",
+              width: "32px",
+              height: "32px",
+              padding: 0,
+              borderRadius: "50%",
+            }}
+            onClick={async () => {
+              const current = await props.via.GetDynamicEntryCountAll();
+              props.onDynamicEntryCountChange({
+                ...current,
+                layer: current.layer - 1,
+              });
+            }}
+          >
+            <Remove />
+          </IconButton>
+          <IconButton
+            size="small"
+            sx={{
+              minWidth: "32px",
+              width: "32px",
+              height: "32px",
+              padding: 0,
+              borderRadius: "50%",
+            }}
+            onClick={async () => {
+              const current = await props.via.GetDynamicEntryCountAll();
+              props.onDynamicEntryCountChange({
+                ...current,
+                layer: current.layer + 1,
+              });
+            }}
+          >
+            <Add />
+          </IconButton>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={captureMode}
+                onChange={(e) => {
+                  setCaptureMode(e.target.checked);
+                }}
+              />
+            }
+            label="Key Capture Mode"
+          />
+        </div>
       </div>
+      {Object.keys(keymap).includes(layer.toString()) ? (
+        <KeymapLayer
+          keymapProps={props.keymap}
+          layoutOption={layoutOption}
+          keymap={keymap[layer]}
+          encodermap={encodermap[layer] ?? [[]]}
+          keycodeconverter={props.keycodeConverter}
+          highlightIndex={currentKeyIndex}
+          captureMode={captureMode}
+          onKeyClick={(index) => {
+            // Key Capture Mode時はクリックでカーソル移動
+            if (captureMode) {
+              setCurrentKeyIndex(index);
+            }
+          }}
+          onKeycodeChange={(target, newKeycode) => {
+            if (target.isEncoder) {
+              const newencoder = { ...encodermap };
+              newencoder[layer][target.matrix[0]] =
+                target.matrix[1] == 0
+                  ? [newKeycode.value, encodermap[layer][target.matrix[0]][1]]
+                  : [encodermap[layer][target.matrix[0]][0], newKeycode.value];
+              setEncodermap(newencoder);
+              sendEncoder(
+                layer,
+                target.matrix[0],
+                target.matrix[1],
+                newKeycode.value
+              );
+              console.log(`update encoder`);
+            } else {
+              const offset =
+                props.keymap.matrix.cols * target.matrix[0] + target.matrix[1];
+              const newKeymap = { ...keymap };
+              newKeymap[layer][offset] = newKeycode.value;
+              setKeymap(newKeymap);
+              sendKeycode(
+                layer,
+                target.matrix[0],
+                target.matrix[1],
+                newKeycode.value
+              );
+              console.log(
+                `update ${layer},${target.matrix[0]},${target.matrix[1]} to ${newKeycode.value}`
+              );
+            }
+          }}
+        ></KeymapLayer>
+      ) : (
+        <></>
+      )}
     </>
   );
 }
