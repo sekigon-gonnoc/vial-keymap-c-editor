@@ -163,6 +163,7 @@ export function parseKeyOverrideEntries(
 
 export function generateKeyOverrideEntries(entries: KeyOverrideEntry[]): string {
   let output = '\n// Key Override definitions\n';
+  output += '#if VIAL_KEY_OVERRIDE_ENTRIES > 0\n';
   output += 'const vial_key_override_entry_t default_key_override_entries[] = {\n';
   
   entries.forEach((entry, index) => {
@@ -180,5 +181,7 @@ export function generateKeyOverrideEntries(entries: KeyOverrideEntry[]): string 
   });
 
   output += '};\n';
+  output += '#endif\n';
+
   return output;
 }
