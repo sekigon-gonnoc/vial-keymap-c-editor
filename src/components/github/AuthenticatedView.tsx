@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import * as Hjson from "hjson";
-import { RequiredFiles, Repository, Branch, TreeResponse } from "./types";
+import { RequiredFiles, Repository, Branch, TreeResponse, FileUpdate, CommitResponse } from "./types";
 import { FileStatusItem } from "./FileStatusItem";
 
 interface AuthenticatedViewProps {
@@ -231,36 +231,41 @@ export function AuthenticatedView({
     setIsCommitting(true);
     try {
       const [owner, repo] = selectedRepo.split("/");
-      const encodedPath = requiredFiles.keymapC.path
-        .split("/")
-        .map((segment) => encodeURIComponent(segment))
-        .join("%2F");
+      
+      const files: FileUpdate[] = [
+        {
+          path: requiredFiles.keymapC.path,
+          content: content
+        }
+      ];
+
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append('files', JSON.stringify(file));
+      });
 
       const response = await fetch(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/github/repos/${owner}/${repo}/${selectedBranch}/${encodedPath}`,
+        `${import.meta.env.VITE_BACKEND_URL}/github/repos/${owner}/${repo}/${selectedBranch}`,
         {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            content: content,
-            message: "Update keymap.c via Vial Keymap Editor",
-          }),
+          method: 'POST',
+          credentials: 'include',
+          body: formData
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to commit changes");
+        throw new Error('Failed to commit changes');
       }
 
-      alert("Keymap updated successfully!");
+      const result: CommitResponse = await response.json();
+      if (result.data) {
+        alert('Files updated successfully!');
+      } else {
+        throw new Error(result.error?.[0] || 'Failed to update files');
+      }
     } catch (error) {
       console.error("Failed to commit changes:", error);
-      alert("Failed to update keymap. Please try again.");
+      alert("Failed to update files. Please try again.");
     } finally {
       setIsCommitting(false);
     }

@@ -33,3 +33,13 @@ export interface RequiredFiles {
     configH?: RepositoryFile;
     rulesMk?: RepositoryFile;
 }
+
+export interface FileUpdate {
+    path: string;
+    content: string;
+}
+
+export interface CommitResponse {
+    error?: string[];
+    data?: { createCommitOnBranch: any };
+};
