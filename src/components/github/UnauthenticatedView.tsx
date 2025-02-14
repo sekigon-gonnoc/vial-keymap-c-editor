@@ -2,6 +2,7 @@ import { Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import * as Hjson from "hjson";
 import { RequiredFiles, TreeResponse } from "./types";
+import { FileStatusItem } from "./FileStatusItem";
 
 interface UnauthenticatedViewProps {
     onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string, rulesMk: string) => void;
@@ -128,82 +129,21 @@ export function UnauthenticatedView({ onloaded, oncommit }: UnauthenticatedViewP
                 {selectedRepo && selectedBranch && (
                     <Stack spacing={1}>
                         <Typography>Required files status:</Typography>
-                        <Typography
-                            color={
-                                requiredFiles.vialJson ? "success.main" : "error.main"
-                            }
-                        >
-                            vial.json:{" "}
-                            {requiredFiles.vialJson ? (
-                                <a
-                                    href={`https://github.com/${selectedRepo}/blob/${selectedBranch}/${requiredFiles.vialJson.path}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ color: 'inherit' }}
-                                >
-                                    {requiredFiles.vialJson.path}
-                                </a>
-                            ) : (
-                                "Not found"
-                            )}
-                        </Typography>
-                        <Typography
-                            color={
-                                requiredFiles.keyboardJson ? "success.main" : "error.main"
-                            }
-                        >
-                            keyboard.json:{" "}
-                            {requiredFiles.keyboardJson ? (
-                                <a
-                                    href={`https://github.com/${selectedRepo}/blob/${selectedBranch}/${requiredFiles.keyboardJson.path}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ color: 'inherit' }}
-                                >
-                                    {requiredFiles.keyboardJson.path}
-                                </a>
-                            ) : (
-                                "Not found"
-                            )}
-                        </Typography>
-                        <Typography
-                            color={
-                                requiredFiles.keymapC ? "success.main" : "error.main"
-                            }
-                        >
-                            keymap.c:{" "}
-                            {requiredFiles.keymapC ? (
-                                <a
-                                    href={`https://github.com/${selectedRepo}/blob/${selectedBranch}/${requiredFiles.keymapC.path}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ color: 'inherit' }}
-                                >
-                                    {requiredFiles.keymapC.path}
-                                </a>
-                            ) : (
-                                "Not found"
-                            )}
-                        </Typography>
-                        <Typography
-                            color={
-                                requiredFiles.configH ? "success.main" : "error.main"
-                            }
-                        >
-                            config.h:{" "}
-                            {requiredFiles.configH ? (
-                                <a
-                                    href={`https://github.com/${selectedRepo}/blob/${selectedBranch}/${requiredFiles.configH.path}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ color: 'inherit' }}
-                                >
-                                    {requiredFiles.configH.path}
-                                </a>
-                            ) : (
-                                "Not found"
-                            )}
-                        </Typography>
+                        {[
+                          { label: "vial.json", key: "vialJson" },
+                          { label: "keyboard.json", key: "keyboardJson" },
+                          { label: "keymap.c", key: "keymapC" },
+                          { label: "config.h", key: "configH" },
+                          { label: "rules.mk", key: "rulesMk" },
+                        ].map(({ label, key }) => (
+                          <FileStatusItem
+                            key={key}
+                            label={label}
+                            file={requiredFiles[key as keyof RequiredFiles]}
+                            repo={selectedRepo}
+                            branch={selectedBranch}
+                          />
+                        ))}
                     </Stack>
                 )}
                 {requiredFiles.vialJson && requiredFiles.keyboardJson && 
