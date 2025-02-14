@@ -70,6 +70,14 @@ export function KeymapEditor(props: {
     lang,
   ]);
 
+  const handleDynamicEntryCountChange = async (type: "combo" | "tapdance" | "override", delta: number) => {
+    const current = await props.via.GetDynamicEntryCountAll();
+    props.onDynamicEntryCountChange({
+      ...current,
+      [type]: Math.max(0, (current[type] ?? 0) + delta)
+    });
+  };
+
   return keycodeConverter === undefined ? (
     <></>
   ) : (
@@ -145,6 +153,7 @@ export function KeymapEditor(props: {
           { label: "TapDance", keygroup: ["tapdance"] },
           { label: "Combo/Override", keygroup: ["combo", "keyoverride"] },
         ]}
+        tapdanceCount={props.dynamicEntryCount.tapdance}
         comboCount={props.dynamicEntryCount.combo}
         overrideCount={props.dynamicEntryCount.override}
         onTapdanceSelect={(index) => {
@@ -163,6 +172,7 @@ export function KeymapEditor(props: {
           setMenuType("override");
           setOverrideIndex(index);
         }}
+        onDynamicEntryCountChange={handleDynamicEntryCountChange}
       ></KeycodeCatalog>
     </>
   );

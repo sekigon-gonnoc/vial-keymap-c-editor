@@ -1,4 +1,5 @@
-import { Box, Tab, Tabs, Tooltip } from "@mui/material";
+import { Box, Tab, Tabs, Tooltip, IconButton } from "@mui/material";
+import { Add, Remove } from "@mui/icons-material";
 import { useState } from "react";
 import { match, P } from "ts-pattern";
 import { DefaultQmkKeycode, KeycodeConverter, QmkKeycode } from "./keycodes/keycodeConverter";
@@ -91,14 +92,38 @@ function CustomTabPanel(props: TabPanelProps) {
 export function KeycodeCatalog(props: {
   keycodeConverter: KeycodeConverter;
   tab: { label: string; keygroup: string[] }[];
+  tapdanceCount?: number;
   comboCount?: number;
   overrideCount?: number;
   onMacroSelect?: (index: number) => void;
   onTapdanceSelect?: (index: number) => void;
   onComoboSelect?: (index: number) => void;
   onOverrideSelect?: (index: number) => void;
+  onDynamicEntryCountChange?: (type: "combo" | "tapdance" | "override", delta: number) => void;
 }) {
   const [tabValue, setTabValue] = useState(0);
+
+  const EntryHeader = ({ title, count, type }: { title: string, count: number, type: "combo" | "tapdance" | "override" }) => (
+    <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+      <div>{title}</div>
+      <IconButton
+        size="small"
+        sx={{ width: 24, height: 24 }}
+        onClick={() => props.onDynamicEntryCountChange?.(type, -1)}
+      >
+        <Remove fontSize="small" />
+      </IconButton>
+      <IconButton
+        size="small"
+        sx={{ width: 24, height: 24 }}
+        onClick={() => props.onDynamicEntryCountChange?.(type, 1)}
+      >
+        <Add fontSize="small" />
+      </IconButton>
+      {/* <div>({count})</div> */}
+    </Box>
+  );
+
   return (
     <>
       <Box>
@@ -120,9 +145,28 @@ export function KeycodeCatalog(props: {
         <CustomTabPanel key={index} value={tabValue} index={index}>
           {tab.keygroup.map((keygroup) => (
             <Box key={keygroup}>
-              {props.keycodeConverter.getTapKeycodeList().some((k) => k.group === keygroup) ? (
+              {props.keycodeConverter
+                .getTapKeycodeList()
+                .some((k) => k.group === keygroup) ? (
                 <>
-                  <Box sx={{ mt: 1 }}>{keygroup}</Box>
+                  {keygroup === "tapdance" ? (
+                    <EntryHeader
+                      title="Tap Dance"
+                      count={props.tapdanceCount ?? 0}
+                      type="tapdance"
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        mt: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                      }}
+                    >
+                      {keygroup}
+                    </Box>
+                  )}
                   <Box
                     sx={{
                       display: "grid",
@@ -138,7 +182,10 @@ export function KeycodeCatalog(props: {
                           .with("tapdance", () => (
                             <KeyListKey
                               key={keycode.value}
-                              keycode={{ ...keycode, label: keycode.label + " 🖊" }}
+                              keycode={{
+                                ...keycode,
+                                label: keycode.label + " 🖊",
+                              }}
                               draggable={true}
                               onClick={() => {
                                 props.onTapdanceSelect?.(keycode.value & 0x1f);
@@ -148,7 +195,10 @@ export function KeycodeCatalog(props: {
                           .with("macro", () => (
                             <KeyListKey
                               key={keycode.value}
-                              keycode={{ ...keycode, label: keycode.label + " 🖊" }}
+                              keycode={{
+                                ...keycode,
+                                label: keycode.label + " 🖊",
+                              }}
                               draggable={true}
                               onClick={() => {
                                 props.onMacroSelect?.(keycode.value & 0x1f);
@@ -168,7 +218,11 @@ export function KeycodeCatalog(props: {
                 </>
               ) : keygroup === "combo" ? (
                 <>
-                  <Box sx={{ mt: 1 }}>{keygroup}</Box>
+                  <EntryHeader
+                    title="Combo"
+                    count={props.comboCount ?? 0}
+                    type="combo"
+                  />
                   <Box
                     sx={{
                       display: "grid",
@@ -195,7 +249,11 @@ export function KeycodeCatalog(props: {
                 </>
               ) : keygroup === "keyoverride" ? (
                 <>
-                  <Box sx={{ mt: 1 }}>{keygroup}</Box>
+                  <EntryHeader
+                    title="Key Override"
+                    count={props.overrideCount ?? 0}
+                    type="override"
+                  />
                   <Box
                     sx={{
                       display: "grid",

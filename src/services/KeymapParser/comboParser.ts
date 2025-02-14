@@ -1,4 +1,3 @@
-
 export interface ComboEntry {
     key1: string;
     key2: string;
@@ -49,6 +48,30 @@ export function parseComboEntries(
   }
 
   return entries;
+}
+
+export function changeComboCount(
+  entries: ComboEntry[],
+  newCount: number
+): ComboEntry[] {
+  if (newCount === entries.length || newCount < 0 || newCount > 32) {
+    return entries;
+  }
+  const defaultEntry: ComboEntry = {
+    key1: "KC_NO",
+    key2: "KC_NO",
+    key3: "KC_NO",
+    key4: "KC_NO",
+    output: "KC_NO",
+  };
+  const newEntries = Array.from({ length: newCount }, (_, index) => {
+    if (index < entries.length) {
+      return entries[index];
+    } else {
+      return { ...defaultEntry };
+    }
+  });
+  return newEntries;
 }
 
 

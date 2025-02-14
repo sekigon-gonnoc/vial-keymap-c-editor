@@ -51,6 +51,29 @@ export function parseTapDanceEntries(
   return entries;
 }
 
+export function changeTapDanceCount(
+  entries: TapDanceEntry[],
+  newCount: number
+): TapDanceEntry[] {
+  if (newCount === entries.length || newCount < 0 || newCount > 32) {
+    return entries;
+  }
+  const newEntries = Array.from({ length: newCount }, (_, index) => {
+    if (index < entries.length) {
+      return entries[index];
+    } else {
+      return {
+        onTap: "KC_NO",
+        onHold: "KC_NO",
+        onDoubleTap: "KC_NO",
+        onTapHold: "KC_NO",
+        tappingTerm: 200,
+      };
+    }
+  });
+  return newEntries;
+}
+
 export function generateTapDanceEntries(entries: TapDanceEntry[]): string {
   let output = "";
   // Tap Dance定義の生成

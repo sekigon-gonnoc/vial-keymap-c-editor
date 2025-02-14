@@ -5,6 +5,9 @@ import { VialData } from "./services/VialData";
 import { changeLayerCount, generateKeymapC, parseKeymapC, QmkKeymap } from "./services/KeymapParser/keymap-c";
 import { generateRulesMk } from "./services/KeymapParser/parseRules";
 import { DynamicEntryCount } from "./services/IVialData";
+import { changeTapDanceCount } from "./services/KeymapParser/tapDanceParser";
+import { changeComboCount } from "./services/KeymapParser/comboParser";
+import { changeKeyOverrideCount } from "./services/KeymapParser/keyoverrideParser";
 
 function App() {
   const [vialJson, setVialJson] = useState<any>(undefined);
@@ -23,10 +26,29 @@ function App() {
 
   const updateDynamicEntryCount = (count: DynamicEntryCount) => {
     if (vialData) {
-      setDynamicEntryCount(count);
       const newLayerCount = changeLayerCount(vialData.keymap, count.layer);
       const newKeyboardJson = { ...keyboardJson, dynamic_keymap: { layer_count: newLayerCount } };
       setKeyboardJson(newKeyboardJson);
+      vialData.keymap.tapDanceEntries = changeTapDanceCount(
+        vialData.keymap.tapDanceEntries,
+        count.tapdance
+      );
+      vialData.keymap.comboEntries = changeComboCount(
+        vialData.keymap.comboEntries,
+        count.combo
+      );
+      vialData.keymap.keyOverrideEntries = changeKeyOverrideCount(
+        vialData.keymap.keyOverrideEntries,
+        count.override
+      );
+      count = {
+        ...count,
+        layer: newLayerCount,
+        tapdance: vialData.keymap.tapDanceEntries.length,
+        combo: vialData.keymap.comboEntries.length,
+        override: vialData.keymap.keyOverrideEntries.length,
+      };
+      setDynamicEntryCount(count);
     }
   };
 

@@ -185,3 +185,29 @@ export function generateKeyOverrideEntries(entries: KeyOverrideEntry[]): string 
 
   return output;
 }
+
+export function changeKeyOverrideCount(
+  entries: KeyOverrideEntry[],
+  newCount: number
+): KeyOverrideEntry[] {
+  if (newCount === entries.length || newCount < 0 || newCount > 32) {
+    return entries;
+  }
+  const defaultEntry: KeyOverrideEntry = {
+    trigger: "KC_NO",
+    replacement: "KC_NO",
+    layers: 0xffff,
+    triggerMods: 0,
+    negativeModMask: 0,
+    suppressedMods: 0,
+    options: 0
+  };
+  const newEntries = Array.from({ length: newCount }, (_, index) => {
+    if (index < entries.length) {
+      return entries[index];
+    } else {
+      return { ...defaultEntry };
+    }
+  });
+  return newEntries;
+}
