@@ -32,6 +32,7 @@ export function updateVialConfig(configContent: string, newConfig: Partial<VialC
   
   // 既存の定義を削除 (行末の改行も含めて削除)
   content = content
+    .replace(/^\s*#\s*define\s+DYNAMIC_KEYMAP_LAYER_COUNT\s+\d+\s*\r?\n/gm, '')
     .replace(/^\s*#\s*define\s+VIAL_TAP_DANCE_ENTRIES\s+\d+\s*\r?\n/gm, '')
     .replace(/^\s*#\s*define\s+VIAL_COMBO_ENTRIES\s+\d+\s*\r?\n/gm, '')
     .replace(/^\s*#\s*define\s+VIAL_KEY_OVERRIDE_ENTRIES\s+\d+\s*\r?\n/gm, '');
