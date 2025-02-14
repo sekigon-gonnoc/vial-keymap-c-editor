@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GitHubApp } from "./components/GitHubApp";
+import { GitHubApp } from "./components/github/GitHubApp";
 import { KeymapEditor } from "./components/KeymapEditor"
 import { VialData } from "./services/VialData";
 import { generateKeymapC, parseKeymapC, QmkKeymap } from "./services/KeymapParser/keymap-c";
