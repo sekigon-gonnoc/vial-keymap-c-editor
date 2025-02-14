@@ -152,33 +152,6 @@ export function LayerEditor(props: {
     });
   };
 
-  // 修飾キーが離されたときの処理を行う関数を抽出
-  const handleModifierRelease = (releasedMod: number, isRight: boolean, keys: KeymapKeyProperties[]) => {
-    const currentKey = keys[currentKeyIndex];
-    if (!currentKey) return;
-
-    // 離された修飾キーに対応するキーコードを決定
-    const baseValue = isRight ? 228 : 224; // 224: KC_LCTL, 228: KC_RCTL
-    const keycode = 
-      releasedMod === ModifierBit.Ctrl ? baseValue :      // KC_LCTL or KC_RCTL
-      releasedMod === ModifierBit.Shift ? baseValue + 1 : // KC_LSFT or KC_RSFT
-      releasedMod === ModifierBit.Alt ? baseValue + 2 :   // KC_LALT or KC_RALT
-      releasedMod === ModifierBit.GUI ? baseValue + 3 :   // KC_LGUI or KC_RGUI
-      0;
-
-    if (keycode === 0) return;
-
-    // キーコードを登録
-    const offset = props.keymap.matrix.cols * currentKey.matrix[0] + currentKey.matrix[1];
-    const newKeymap = { ...keymap };
-    newKeymap[layer][offset] = keycode;
-    setKeymap(newKeymap);
-    sendKeycode(layer, currentKey.matrix[0], currentKey.matrix[1], keycode);
-
-    // 次のキーに移動
-    moveToNextKey(keys);
-  };
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!captureMode) return;
