@@ -215,6 +215,25 @@ export function AuthenticatedView({
     }
   };
 
+  // キーマップをダウンロードする関数
+  const handleDownload = () => {
+    const files = oncommit();
+    if (!files['keymap.c']) {
+      alert('Cannot download: keymap is not ready');
+      return;
+    }
+
+    const blob = new Blob([files['keymap.c']], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'keymap.c';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
   // コミット処理
   const handleCommit = async () => {
     const fileContentsByLabel = oncommit();
@@ -262,7 +281,17 @@ export function AuthenticatedView({
       );
 
       if (!response.ok) {
-        throw new Error('Failed to commit changes');
+        if (response.status === 401) {
+          const shouldDownload = window.confirm(
+            'セッションの有効期限が切れました。代わりにkeymap.cをダウンロードしますか?'
+          );
+          if (shouldDownload) {
+            handleDownload();
+          }
+          onLogout();
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result: CommitResponse = await response.json();
