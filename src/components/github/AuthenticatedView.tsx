@@ -21,7 +21,8 @@ interface AuthenticatedViewProps {
     vialJson: any,
     keyboardJson: any,
     keymapC: string,
-    configH: string
+    configH: string,
+    rulesMk: string
   ) => void;
   oncommit: () => string;
   onLogout: () => void;
@@ -171,6 +172,15 @@ export function AuthenticatedView({
               path: file.path,
               type: "file",
             };
+          if (fileName === "rules.mk") {
+            if (file.path.includes("/keymaps/")) {
+              foundFiles.rulesMk = {
+                name: fileName,
+                path: file.path,
+                type: "file",
+              };
+            }
+          }
         }
       });
 
@@ -180,17 +190,20 @@ export function AuthenticatedView({
         foundFiles.vialJson &&
         foundFiles.keyboardJson &&
         foundFiles.keymapC &&
-        foundFiles.configH
+        foundFiles.configH &&
+        foundFiles.rulesMk
       ) {
-        const [vialJson, keyboardJson, keymapC, configH] = await Promise.all([
-          loadJsonFile(owner, repo, branch, foundFiles.vialJson.path),
-          loadJsonFile(owner, repo, branch, foundFiles.keyboardJson.path),
-          loadTextFile(owner, repo, branch, foundFiles.keymapC.path),
-          loadTextFile(owner, repo, branch, foundFiles.configH.path),
-        ]);
+        const [vialJson, keyboardJson, keymapC, configH, rulesMk] =
+          await Promise.all([
+            loadJsonFile(owner, repo, branch, foundFiles.vialJson.path),
+            loadJsonFile(owner, repo, branch, foundFiles.keyboardJson.path),
+            loadTextFile(owner, repo, branch, foundFiles.keymapC.path),
+            loadTextFile(owner, repo, branch, foundFiles.configH.path),
+            loadTextFile(owner, repo, branch, foundFiles.rulesMk.path),
+          ]);
 
-        if (vialJson && keyboardJson && keymapC && configH) {
-          onloaded(vialJson, keyboardJson, keymapC, configH);
+        if (vialJson && keyboardJson && keymapC && configH && rulesMk) {
+          onloaded(vialJson, keyboardJson, keymapC, configH, rulesMk);
         }
       }
     } catch (error) {
@@ -416,12 +429,30 @@ export function AuthenticatedView({
                 "Not found"
               )}
             </Typography>
+            <Typography
+              color={requiredFiles.rulesMk ? "success.main" : "error.main"}
+            >
+              rules.mk:{" "}
+              {requiredFiles.rulesMk ? (
+                <a
+                  href={`https://github.com/${selectedRepo}/blob/${selectedBranch}/${requiredFiles.rulesMk.path}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit" }}
+                >
+                  {requiredFiles.rulesMk.path}
+                </a>
+              ) : (
+                "Not found"
+              )}
+            </Typography>
           </Stack>
         )}
         {requiredFiles.vialJson &&
           requiredFiles.keyboardJson &&
           requiredFiles.keymapC &&
-          requiredFiles.configH && (
+          requiredFiles.configH &&
+          requiredFiles.rulesMk && (
             <Button variant="contained" color="primary" onClick={handleCommit}>
               Commit Changes
             </Button>

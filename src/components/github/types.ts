@@ -31,4 +31,5 @@ export interface RequiredFiles {
     keyboardJson?: RepositoryFile;
     keymapC?: RepositoryFile;
     configH?: RepositoryFile;
+    rulesMk?: RepositoryFile;
 }

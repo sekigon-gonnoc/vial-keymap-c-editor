@@ -4,7 +4,7 @@ import * as Hjson from "hjson";
 import { RequiredFiles, TreeResponse } from "./types";
 
 interface UnauthenticatedViewProps {
-    onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string) => void;
+    onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string, rulesMk: string) => void;
     oncommit: () => string;
 }
 
@@ -39,13 +39,19 @@ export function UnauthenticatedView({ onloaded, oncommit }: UnauthenticatedViewP
                 if (fileName === 'keyboard.json') foundFiles.keyboardJson = { name: fileName, path: file.path, type: 'file' };
                 if (fileName === 'keymap.c') foundFiles.keymapC = { name: fileName, path: file.path, type: 'file' };
                 if (fileName === 'config.h') foundFiles.configH = { name: fileName, path: file.path, type: 'file' };
+                if (fileName === 'rules.mk') {
+                    // keymaps/*/rules.mk のパターンにマッチするか確認
+                    if (file.path.includes('/keymaps/')) {
+                        foundFiles.rulesMk = { name: fileName, path: file.path, type: 'file' };
+                    }
+                }
             });
             
             setRequiredFiles(foundFiles);
             setSelectedRepo(`${owner}/${repo}`);
             setSelectedBranch(branch);
 
-            if (foundFiles.vialJson && foundFiles.keyboardJson && foundFiles.keymapC && foundFiles.configH) {
+            if (foundFiles.vialJson && foundFiles.keyboardJson && foundFiles.keymapC && foundFiles.configH && foundFiles.rulesMk) {
                 // Raw contentのURLを使用してファイルを取得
                 const getRawContent = async (path: string) => {
                     const response = await fetch(
@@ -54,17 +60,18 @@ export function UnauthenticatedView({ onloaded, oncommit }: UnauthenticatedViewP
                     return await response.text();
                 };
 
-                const [vialJsonText, keyboardJsonText, keymapC, configH] = await Promise.all([
+                const [vialJsonText, keyboardJsonText, keymapC, configH, rulesMk] = await Promise.all([
                     getRawContent(foundFiles.vialJson.path),
                     getRawContent(foundFiles.keyboardJson.path),
                     getRawContent(foundFiles.keymapC.path),
-                    getRawContent(foundFiles.configH.path)
+                    getRawContent(foundFiles.configH.path),
+                    getRawContent(foundFiles.rulesMk.path)
                 ]);
 
                 const vialJson = Hjson.parse(vialJsonText);
                 const keyboardJson = Hjson.parse(keyboardJsonText);
                 
-                onloaded(vialJson, keyboardJson, keymapC, configH);
+                onloaded(vialJson, keyboardJson, keymapC, configH, rulesMk);
             }
         } catch (error) {
             console.error('Failed to load public repository:', error);
@@ -200,7 +207,7 @@ export function UnauthenticatedView({ onloaded, oncommit }: UnauthenticatedViewP
                     </Stack>
                 )}
                 {requiredFiles.vialJson && requiredFiles.keyboardJson && 
-                 requiredFiles.keymapC && requiredFiles.configH && (
+                 requiredFiles.keymapC && requiredFiles.configH && requiredFiles.rulesMk && (
                     <Button
                         variant="contained"
                         color="primary"
