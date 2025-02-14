@@ -100,6 +100,16 @@ function App() {
             throw new Error("rules.mk is not initialized");
           }
 
+          if (!keyboardJson) {
+            alert("Invalid keyboard.json");
+            throw new Error("keyboard.json is not initialized");
+          }
+
+          if (!configH) {
+            alert("Invalid config.h");
+            throw new Error("config.h is not initialized");
+          }
+
           return {
             'keymap.c': generateKeymapC(vialData.keymap),
             'rules.mk': generateRulesMk(rulesMk),

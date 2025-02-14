@@ -1,6 +1,6 @@
 import { DefaultQmkKeycode, KeycodeConverter, QmkKeycode } from "../components/keycodes/keycodeConverter";
 import { DynamicEntryCount, IVialData } from "./IVialData";
-import { KeymapLayer, QmkKeymap } from "./KeymapParser/keymap-c";
+import { QmkKeymap } from "./KeymapParser/keymap-c";
 
 export type CustomKeycode = {
   name: string;

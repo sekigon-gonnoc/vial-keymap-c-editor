@@ -103,7 +103,10 @@ export function KeycodeCatalog(props: {
 }) {
   const [tabValue, setTabValue] = useState(0);
 
-  const EntryHeader = ({ title, count, type }: { title: string, count: number, type: "combo" | "tapdance" | "override" }) => (
+  const EntryHeader = ({ title, count, type }: { title: string, count: number, type: "combo" | "tapdance" | "override" }) => {
+    (count); // unused
+
+    return (
     <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
       <div>{title}</div>
       <IconButton
@@ -123,6 +126,7 @@ export function KeycodeCatalog(props: {
       {/* <div>({count})</div> */}
     </Box>
   );
+}
 
   return (
     <>
