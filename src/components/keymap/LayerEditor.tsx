@@ -499,6 +499,9 @@ export function LayerEditor(props: {
             }}
             onClick={async () => {
               const current = await props.via.GetDynamicEntryCountAll();
+              if (current.layer - 1 == layer) {
+                setLayer(layer - 1);
+              }
               props.onDynamicEntryCountChange({
                 ...current,
                 layer: current.layer - 1,
