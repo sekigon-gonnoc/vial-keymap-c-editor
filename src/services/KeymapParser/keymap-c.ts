@@ -24,7 +24,6 @@ export interface QmkKeymap {
     keymap: string;
     layout: string;
     layers: KeymapLayer[];
-    dynamicLayerCount: number;
     dynamicMacroCount: number;
     tapDanceEntries: TapDanceEntry[];
     comboEntries: ComboEntry[];
@@ -255,7 +254,6 @@ export function parseKeymapC(
     keymap: "default",
     layout: defaultLayoutName,
     layers,
-    dynamicLayerCount,
     dynamicMacroCount: 32,
     tapDanceEntries,
     comboEntries,
@@ -291,6 +289,26 @@ function getConfigValue(configH: string, name: string): number | undefined {
     return val;
   } catch {
     return undefined;
+  }
+}
+
+export function changeLayerCount(keymap: QmkKeymap, newLayerCount: number) {
+  if (newLayerCount === keymap.layers.length) {
+    return;
+  }
+  if (0 < newLayerCount && newLayerCount < keymap.layers.length) {
+    keymap.layers = keymap.layers.slice(0, newLayerCount);
+  } else {
+    const defaultLayout = keymap.layers[0];
+    for (let i = keymap.layers.length; i < Math.min(32, newLayerCount); i++) {
+      keymap.layers.push({
+        layout: defaultLayout.layout,
+        keys: defaultLayout.keys.map((key) => ({
+          keycode: "KC_TRANSPARENT",
+          matrix: key.matrix,
+        })),
+      });
+    }
   }
 }
 

@@ -6,7 +6,7 @@ import {
   ModifierBit,
 } from "../keycodes/keycodeConverter";
 import { KeymapKeyProperties, KeymapProperties } from "./KeymapTypes";
-import { IVialData } from "../../services/IVialData";
+import { DynamicEntryCount, IVialData } from "../../services/IVialData";
 import { KeymapLayer } from "./KeyComponents";
 import { convertToKeymapKeys } from "./converToKeymapKeys";
 
@@ -65,6 +65,7 @@ export function LayerEditor(props: {
   dynamicEntryCount: { tapdance: number };
   onTapdanceSelect?: (index: number) => void;
   onMacroSelect?: (index: number) => void;
+  onDynamicEntryCountChange: (count: DynamicEntryCount) => void;
 }) {
   const [layoutOption, setLayoutOption] = useState<{
     [layout: number]: number;
@@ -414,6 +415,28 @@ export function LayerEditor(props: {
             setLayer(layer);
           }}
         ></LayerSelector>
+        <Button
+          onClick={async () => {
+            const current = await props.via.GetDynamicEntryCountAll();
+            props.onDynamicEntryCountChange({
+              ...current,
+              layer: current.layer + 1,
+            });
+          }}
+        >
+         Increment Layer
+        </Button>
+        <Button
+          onClick={async () => {
+            const current = await props.via.GetDynamicEntryCountAll();
+            props.onDynamicEntryCountChange({
+              ...current,
+              layer: current.layer - 1,
+            });
+          }}
+        >
+         Decrement Layer
+        </Button>
         <FormControlLabel
           control={
             <Switch

@@ -2,8 +2,9 @@ import { useState } from "react";
 import { GitHubApp } from "./components/github/GitHubApp";
 import { KeymapEditor } from "./components/KeymapEditor"
 import { VialData } from "./services/VialData";
-import { generateKeymapC, parseKeymapC, QmkKeymap } from "./services/KeymapParser/keymap-c";
+import { changeLayerCount, generateKeymapC, parseKeymapC, QmkKeymap } from "./services/KeymapParser/keymap-c";
 import { generateRulesMk } from "./services/KeymapParser/parseRules";
+import { DynamicEntryCount } from "./services/IVialData";
 
 function App() {
   const [vialJson, setVialJson] = useState<any>(undefined);
@@ -12,6 +13,20 @@ function App() {
   const [configH, setConfigH] = useState<string | undefined>(undefined);
   const [rulesMk, setRulesMk] = useState<string | undefined>(undefined);
   const [vialData, setVialData] = useState<VialData | undefined>(undefined);
+  const [dynamicEntryCount, setDynamicEntryCount] = useState<{
+    layer: number;
+    macro: number;
+    tapdance: number;
+    combo: number;
+    override: number;
+  }>();
+
+  const updateDynamicEntryCount = (count: DynamicEntryCount) => {
+    if (vialData) {
+      setDynamicEntryCount(count);
+      changeLayerCount(vialData.keymap, count.layer);
+    }
+  };
 
   return (
     <>
@@ -26,6 +41,13 @@ function App() {
           const newVialData = new VialData(newKeymapC);
           await newVialData.initKeycodeTable(vialJson.customKeycodes);
           setVialData(newVialData);
+          setDynamicEntryCount({
+            layer: newKeymapC.layers.length,
+            macro: newKeymapC.macroEntries.length,
+            tapdance: newKeymapC.tapDanceEntries.length,
+            combo: newKeymapC.comboEntries.length,
+            override: newKeymapC.keyOverrideEntries.length,
+          });
         }}
         onunloaded={() => {
           setVialJson(undefined);
@@ -51,19 +73,14 @@ function App() {
           };
         }}
       />
-      {vialJson && keyboardJson && keymapC && vialData && configH && (
+      {vialJson && keyboardJson && keymapC && vialData && configH && dynamicEntryCount && (
         <>
           <div style={{ height: "16px" }} />
           <KeymapEditor
             keymap={vialJson}
             via={vialData}
-            dynamicEntryCount={{
-              layer: vialData.keymap.dynamicLayerCount,
-              macro: vialData.keymap.dynamicMacroCount,
-              tapdance: vialData.keymap.tapDanceEntries.length,
-              combo: vialData.keymap.comboEntries.length,
-              override: vialData.keymap.keyOverrideEntries.length,
-            }}
+            dynamicEntryCount={dynamicEntryCount}
+            onDynamicEntryCountChange={updateDynamicEntryCount}
           />
         </>
       )}

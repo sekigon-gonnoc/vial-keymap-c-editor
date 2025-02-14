@@ -1,6 +1,6 @@
 import { Box, FormControl, MenuItem, Select } from "@mui/material";
 import { useEffect, useState } from "react";
-import { IVialData } from "../services/IVialData";
+import { DynamicEntryCount, IVialData } from "../services/IVialData";
 import { ComboEditor } from "./ComboEditor";
 import { KeycodeCatalog } from "./KeycodeCatalog";
 import { KeycodeConverter } from "./keycodes/keycodeConverter";
@@ -43,6 +43,7 @@ export function KeymapEditor(props: {
     combo: number;
     override: number;
   };
+  onDynamicEntryCountChange: (count: DynamicEntryCount) => void;
 }) {
   const [menuType, setMenuType] = useState<
     "layer" | "tapdance" | "macro" | "combo" | "override"
@@ -78,6 +79,7 @@ export function KeymapEditor(props: {
           {...props}
           layerCount={props.dynamicEntryCount.layer}
           keycodeConverter={keycodeConverter}
+          onDynamicEntryCountChange={props.onDynamicEntryCountChange}
         ></LayerEditor>
       </Box>
       <Box hidden={menuType !== "tapdance"}>

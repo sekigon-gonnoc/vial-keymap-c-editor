@@ -1,6 +1,6 @@
 import { DefaultQmkKeycode, KeycodeConverter, QmkKeycode } from "../components/keycodes/keycodeConverter";
 import { DynamicEntryCount, IVialData } from "./IVialData";
-import { QmkKeymap } from "./KeymapParser/keymap-c";
+import { KeymapLayer, QmkKeymap } from "./KeymapParser/keymap-c";
 
 export type CustomKeycode = {
   name: string;
@@ -22,7 +22,7 @@ export class VialData implements IVialData {
   }
   async initKeycodeTable(customKeycodes?: CustomKeycode[]): Promise<void> {
     this.keycodeConverter = await KeycodeConverter.Create(
-      this.keymap.dynamicLayerCount,
+      this.keymap.layers.length,
       customKeycodes,
       32,
       this._keymap.tapDanceEntries.length
@@ -59,7 +59,7 @@ export class VialData implements IVialData {
   }
 
   async GetLayerCount(): Promise<number> {
-    return this.keymap.dynamicLayerCount;
+    return this.keymap.layers.length;
   }
 
   async GetLayer(
@@ -164,7 +164,7 @@ export class VialData implements IVialData {
 
   async GetDynamicEntryCountAll(): Promise<DynamicEntryCount> {
     return {
-      layer: this.keymap.dynamicLayerCount,
+      layer: this.keymap.layers.length,
       macro: this.keymap.macroEntries.length,
       tapdance: this.keymap.tapDanceEntries.length,
       combo: this.keymap.comboEntries.length,
