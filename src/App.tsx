@@ -8,6 +8,7 @@ import { DynamicEntryCount } from "./services/IVialData";
 import { changeTapDanceCount } from "./services/KeymapParser/tapDanceParser";
 import { changeComboCount } from "./services/KeymapParser/comboParser";
 import { changeKeyOverrideCount } from "./services/KeymapParser/keyoverrideParser";
+import { updateVialConfig } from "./services/KeymapParser/configParser";
 
 function App() {
   const [vialJson, setVialJson] = useState<any>(undefined);
@@ -25,7 +26,7 @@ function App() {
   }>();
 
   const updateDynamicEntryCount = (count: DynamicEntryCount) => {
-    if (vialData) {
+    if (vialData && configH) {
       const newLayerCount = changeLayerCount(vialData.keymap, count.layer);
       const newKeyboardJson = { ...keyboardJson, dynamic_keymap: { layer_count: newLayerCount } };
       setKeyboardJson(newKeyboardJson);
@@ -49,6 +50,14 @@ function App() {
         override: vialData.keymap.keyOverrideEntries.length,
       };
       setDynamicEntryCount(count);
+
+      // config.hの更新
+      const newConfigH = updateVialConfig(configH, {
+        tapDanceEntries: count.tapdance,
+        comboEntries: count.combo,
+        keyOverrideEntries: count.override,
+      });
+      setConfigH(newConfigH);
     }
   };
 
@@ -95,6 +104,7 @@ function App() {
             'keymap.c': generateKeymapC(vialData.keymap),
             'rules.mk': generateRulesMk(rulesMk),
             'keyboard.json': JSON.stringify(keyboardJson, null, 4),
+            'config.h': configH,
           };
         }}
       />

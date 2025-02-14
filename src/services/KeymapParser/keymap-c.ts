@@ -3,6 +3,7 @@ import { EncoderEntry, generateEncoderEntries, parseEncoderEntries } from "./enc
 import { generateMacroEntries, parseMacroEntries } from "./macroParser";
 import { generateTapDanceEntries, parseTapDanceEntries, TapDanceEntry } from "./tapDanceParser";
 import { KeyOverrideEntry, generateKeyOverrideEntries, parseKeyOverrideEntries } from "./keyoverrideParser";
+import { parseVialConfig } from "./configParser";
 
 export interface KeymapKey {
     keycode: string;  // キーコード (例: "KC_A")
@@ -222,12 +223,11 @@ export function parseKeymapC(
   }
 
   // 各種動的エントリー数を取得
-  const dynamicComboCount = getConfigValue(configH, "VIAL_COMBO_ENTRIES") ?? 0;
-  // const dynamicMacroCount = 32;
-  const dynamicTapDanceCount =
-    getConfigValue(configH, "VIAL_TAP_DANCE_ENTRIES") ?? 0;
-  const dynamicOverrideCount =
-    getConfigValue(configH, "VIAL_KEY_OVERRIDE_ENTRIES") ?? 0;
+  const {
+    tapDanceEntries: dynamicComboCount,
+    comboEntries: dynamicTapDanceCount,
+    keyOverrideEntries: dynamicOverrideCount,
+  } = parseVialConfig(configH);
   const encoderCount = keyboardJson.encoder?.rotary?.length ?? 0;
   const encoderEntries = parseEncoderEntries(
     content,
@@ -276,20 +276,6 @@ function findMatchingBracket(str: string, openPos: number): number {
     }
   }
   return -1;
-}
-
-// config.hからdefineマクロの値を取得
-function getConfigValue(configH: string, name: string): number | undefined {
-  const match = configH.match(new RegExp(`#define\\s+${name}\\s+(.+)`));
-  if (!match) {
-    return undefined;
-  }
-  try {
-    const val = parseInt(match[1]);
-    return val;
-  } catch {
-    return undefined;
-  }
 }
 
 export function changeLayerCount(keymap: QmkKeymap, newLayerCount: number) {
