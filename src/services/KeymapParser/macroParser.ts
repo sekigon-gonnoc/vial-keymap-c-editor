@@ -15,8 +15,6 @@ export function parseMacroEntries(content: string): number[] {
 }
 
 export function generateMacroEntries(bytes: number[]): string {
-    if (bytes.length === 0) return "";
-
     let output = "\n// Macro buffer\n";
     output += "const uint8_t PROGMEM default_macro_buffer[] = {\n    ";
     
