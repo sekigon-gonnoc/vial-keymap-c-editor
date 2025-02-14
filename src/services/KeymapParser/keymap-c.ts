@@ -298,6 +298,7 @@ export function changeLayerCount(keymap: QmkKeymap, newLayerCount: number) {
   }
   if (0 < newLayerCount && newLayerCount < keymap.layers.length) {
     keymap.layers = keymap.layers.slice(0, newLayerCount);
+    keymap.encoderEntries = keymap.encoderEntries.slice(0, newLayerCount);
   } else {
     const defaultLayout = keymap.layers[0];
     for (let i = keymap.layers.length; i < Math.min(32, newLayerCount); i++) {
@@ -308,6 +309,12 @@ export function changeLayerCount(keymap: QmkKeymap, newLayerCount: number) {
           matrix: key.matrix,
         })),
       });
+      if (keymap.encoderEntries.length > 0) {
+        const encoderCount = keymap.encoderEntries[0].length;
+        keymap.encoderEntries.push(
+          Array(encoderCount).fill({ cw: "KC_TRANSPARENT", ccw: "KC_TRANSPARENT" })
+        );
+      }
     }
   }
 }
