@@ -26,7 +26,7 @@ interface AuthenticatedViewProps {
     rulesMk: string
   ) => void;
   onunloaded: () => void;
-  oncommit: () => string;
+  oncommit: () => {[file: string]: string};
   onLogout: () => void;
 }
 
@@ -217,27 +217,35 @@ export function AuthenticatedView({
 
   // コミット処理
   const handleCommit = async () => {
-    const content = oncommit();
-    if (
-      !content ||
-      !selectedRepo ||
-      !selectedBranch ||
-      !requiredFiles.keymapC
-    ) {
+    const fileContentsByLabel = oncommit();
+    if (!selectedRepo || !selectedBranch || !requiredFiles.keymapC) {
       alert("Cannot commit: Repository, branch or keymap is not ready");
       return;
     }
+
+    // ラベルからパスへのマッピング
+    const labelToPath: {[label: string]: string} = {
+      'keymap.c': requiredFiles.keymapC.path,
+      'config.h': requiredFiles.configH?.path || '',
+      'rules.mk': requiredFiles.rulesMk?.path || '',
+      'vial.json': requiredFiles.vialJson?.path || '',
+      'keyboard.json': requiredFiles.keyboardJson?.path || ''
+    };
 
     setIsCommitting(true);
     try {
       const [owner, repo] = selectedRepo.split("/");
       
-      const files: FileUpdate[] = [
-        {
-          path: requiredFiles.keymapC.path,
-          content: content
-        }
-      ];
+      const files: FileUpdate[] = Object.entries(fileContentsByLabel)
+        .filter(([label]) => labelToPath[label]) // パスが存在するファイルのみ
+        .map(([label, content]) => ({
+          path: labelToPath[label],
+          content
+        }));
+
+      if (files.length === 0) {
+        throw new Error('No valid files to commit');
+      }
 
       const formData = new FormData();
       files.forEach(file => {

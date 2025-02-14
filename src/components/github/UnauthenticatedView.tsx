@@ -5,8 +5,8 @@ import { RequiredFiles, TreeResponse } from "./types";
 import { FileStatusItem } from "./FileStatusItem";
 
 interface UnauthenticatedViewProps {
-    onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string, rulesMk: string) => void;
-    oncommit: () => string;
+  onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string, rulesMk: string) => void;
+  oncommit: () => { [label: string]: string };
 }
 
 export function UnauthenticatedView({ onloaded, oncommit }: UnauthenticatedViewProps) {
@@ -82,7 +82,7 @@ export function UnauthenticatedView({ onloaded, oncommit }: UnauthenticatedViewP
 
     // キーマップをダウンロードする関数
     const handleDownload = () => {
-        const content = oncommit();
+        const content = oncommit()['keymap.c'];
         if (!content) {
             alert('Cannot download: keymap is not ready');
             return;

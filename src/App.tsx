@@ -36,7 +36,9 @@ function App() {
             alert("Invalid keymap");
             throw new Error("VialData is not initialized");
           }
-          return generateKeymapC(vialData.keymap);
+          return {
+            'keymap.c': generateKeymapC(vialData.keymap)
+          };
         }}
       />
       {vialJson && keyboardJson && keymapC && vialData && configH && (

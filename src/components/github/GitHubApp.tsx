@@ -3,9 +3,9 @@ import { AuthenticatedView } from "./AuthenticatedView";
 import { UnauthenticatedView } from "./UnauthenticatedView";
 
 interface GitHubAppProps {
-    onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string) => void;
+    onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string, rulesMk: string) => void;
     onunloaded: () => void;
-    oncommit: () => string;
+    oncommit: () => {[label: string]: string};
 }
 
 export function GitHubApp(props: GitHubAppProps) {
