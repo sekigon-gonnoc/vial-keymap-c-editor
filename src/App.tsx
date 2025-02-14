@@ -20,11 +20,16 @@ function App() {
           const newKeymapC = parseKeymapC(keymapC, keyboardJson, configH);
           setKeymapC(newKeymapC);
           setConfigH(configH);
-          const newVialData = new VialData(
-            newKeymapC,
-          );
+          const newVialData = new VialData(newKeymapC);
           await newVialData.initKeycodeTable(vialJson.customKeycodes);
           setVialData(newVialData);
+        }}
+        onunloaded={() => {
+          setVialJson(undefined);
+          setKeyboardJson(undefined);
+          setKeymapC(undefined);
+          setConfigH(undefined);
+          setVialData(undefined);
         }}
         oncommit={() => {
           if (!vialData) {

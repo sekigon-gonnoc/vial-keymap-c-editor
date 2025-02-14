@@ -4,6 +4,7 @@ import { UnauthenticatedView } from "./UnauthenticatedView";
 
 interface GitHubAppProps {
     onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string) => void;
+    onunloaded: () => void;
     oncommit: () => string;
 }
 
@@ -26,6 +27,7 @@ export function GitHubApp(props: GitHubAppProps) {
     }, []);
 
     const handleLogout = () => {
+        props.onunloaded();
         fetch(`${import.meta.env.VITE_BACKEND_URL}/github/logout`, { credentials: 'include' })
             .then(() => {
                 setAvatarUrl(null);
@@ -37,6 +39,7 @@ export function GitHubApp(props: GitHubAppProps) {
         <AuthenticatedView
             avatarUrl={avatarUrl}
             onloaded={props.onloaded}
+            onunloaded={props.onunloaded}
             oncommit={props.oncommit}
             onLogout={handleLogout}
         />

@@ -25,6 +25,7 @@ interface AuthenticatedViewProps {
     configH: string,
     rulesMk: string
   ) => void;
+  onunloaded: () => void;
   oncommit: () => string;
   onLogout: () => void;
 }
@@ -32,6 +33,7 @@ interface AuthenticatedViewProps {
 export function AuthenticatedView({
   avatarUrl,
   onloaded,
+  onunloaded,
   oncommit,
   onLogout,
 }: AuthenticatedViewProps) {
@@ -113,6 +115,7 @@ export function AuthenticatedView({
 
   // リポジトリ選択時の処理
   const handleRepoChange = async (repoFullName: string) => {
+    onunloaded(); // 今のリポジトリの情報をクリア
     setSelectedRepo(repoFullName);
     setSelectedBranch("");
     setRequiredFiles({});
@@ -354,7 +357,7 @@ export function AuthenticatedView({
             >
               Add Repository
             </Button>
-            <Button variant="outlined" color="error" onClick={onLogout}>
+            <Button variant="outlined" color="error" onClick={onLogout} >
               Logout
             </Button>
           </Stack>
