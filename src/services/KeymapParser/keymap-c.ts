@@ -352,8 +352,10 @@ export function generateKeymapC(keymap: QmkKeymap): string {
     // 初期化コード
     output += `
 // Initialize Vial dynamic items
-__attribute__((weak)) void eeconfig_init_user_manual(void) {}
-void                       eeconfig_init_user(void) {
+void __real_dynamic_keymap_reset(void);
+void __wrap_dynamic_keymap_reset(void) {
+    __real_dynamic_keymap_reset();
+
 #if VIAL_TAP_DANCE_ENTRIES > 0
     for (size_t i = 0; i < sizeof(default_tap_dance_entries) / sizeof(default_tap_dance_entries[0]); ++i) {
         dynamic_keymap_set_tap_dance(i, &default_tap_dance_entries[i]);
@@ -371,9 +373,8 @@ void                       eeconfig_init_user(void) {
 #endif
     uint16_t const macro_buffer_size = MIN(sizeof(default_macro_buffer), dynamic_keymap_macro_get_buffer_size());
     dynamic_keymap_macro_set_buffer(0, macro_buffer_size, (uint8_t *)default_macro_buffer);
-
-    eeconfig_init_user_manual();
-}`;
+}
+`;
 
     output += "\n\n/* GENERATED CODE BEGIN */\n\n";
 

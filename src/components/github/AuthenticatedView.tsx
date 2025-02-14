@@ -240,7 +240,7 @@ export function AuthenticatedView({
         .filter(([label]) => labelToPath[label]) // パスが存在するファイルのみ
         .map(([label, content]) => ({
           path: labelToPath[label],
-          content
+          content: btoa(content)
         }));
 
       if (files.length === 0) {
