@@ -48,18 +48,20 @@ function LayoutSelector(props: {
   );
 }
 
-function LayerSelector(props: {
-  layerCount: number;
+function LayerSelector(props: { 
+  layerCount: number; 
+  currentLayer?: number;
   onChange: (layer: number) => void;
 }) {
   return (
     <div style={{ display: "flex", gap: "4px" }}>
       {[...Array(props.layerCount)].map((_, idx) => {
+        const isActive = idx === props.currentLayer;
         return (
           <Button
             key={idx}
             value={idx}
-            variant="outlined"
+            variant={isActive ? "contained" : "outlined"}
             size="small"
             sx={{
               minWidth: "32px",
@@ -205,7 +207,7 @@ export function LayerEditor(props: {
         return;
       }
 
-      // 修飾キー以外のキーが押されたらmodifierOnlyPressをfalseに
+      // 修飾キー以外のキーが押されていたらmodifierOnlyPressをfalseに
       setModifierOnlyPress(false);
 
       const keycode = props.keycodeConverter.convertKeyEventToKeycode(event);
@@ -459,6 +461,7 @@ export function LayerEditor(props: {
           />
           <LayerSelector
             layerCount={props.layerCount}
+            currentLayer={layer}
             onChange={async (layer) => {
               if (!Object.keys(keymap).includes(layer.toString())) {
                 const layerKeys = await props.via.GetLayer(layer, {
