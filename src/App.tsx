@@ -24,7 +24,9 @@ function App() {
   const updateDynamicEntryCount = (count: DynamicEntryCount) => {
     if (vialData) {
       setDynamicEntryCount(count);
-      changeLayerCount(vialData.keymap, count.layer);
+      const newLayerCount = changeLayerCount(vialData.keymap, count.layer);
+      const newKeyboardJson = { ...keyboardJson, dynamic_keymap: { layer_count: newLayerCount } };
+      setKeyboardJson(newKeyboardJson);
     }
   };
 
@@ -69,7 +71,8 @@ function App() {
 
           return {
             'keymap.c': generateKeymapC(vialData.keymap),
-            'rules.mk': generateRulesMk(rulesMk)
+            'rules.mk': generateRulesMk(rulesMk),
+            'keyboard.json': JSON.stringify(keyboardJson, null, 4),
           };
         }}
       />

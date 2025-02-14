@@ -294,7 +294,7 @@ function getConfigValue(configH: string, name: string): number | undefined {
 
 export function changeLayerCount(keymap: QmkKeymap, newLayerCount: number) {
   if (newLayerCount === keymap.layers.length) {
-    return;
+    return newLayerCount;
   }
   if (0 < newLayerCount && newLayerCount < keymap.layers.length) {
     keymap.layers = keymap.layers.slice(0, newLayerCount);
@@ -317,6 +317,8 @@ export function changeLayerCount(keymap: QmkKeymap, newLayerCount: number) {
       }
     }
   }
+
+  return keymap.layers.length;
 }
 
 // QmkKeymapオブジェクトをkeymap.cファイルの内容に変換
