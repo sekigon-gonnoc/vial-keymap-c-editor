@@ -1,6 +1,6 @@
 # vial-keymap-c-editor
 
-<img src="public/icon.svg" width=100px></img>
+<a href="https://vial-keymap-c-editor.pages.dev/" target="_blank"><img src="public/icon.svg" width=100px></img></a>
 https://vial-keymap-c-editor.pages.dev/
 
 vialの初期キーマップをGUIから設定するためのツールです。 GitHubとの連携を許可することでkeymap.cを読みこみ、編集した結果をコミットできます。
