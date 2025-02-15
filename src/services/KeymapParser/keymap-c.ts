@@ -389,7 +389,7 @@ void __wrap_dynamic_keymap_reset(void) {
 }
 `;
 
-    output += "\n\n/* GENERATED CODE BEGIN */\n\n";
+    output += "\n/* GENERATED CODE END */\n\n";
 
 
     // ユーザーコード部分
