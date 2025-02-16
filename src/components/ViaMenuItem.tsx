@@ -11,9 +11,7 @@ import {
   Slider,
   Switch,
 } from "@mui/material";
-import { MuiColorInput, MuiColorInputColors } from "mui-color-input";
 import { ChangeEvent, SyntheticEvent } from "react";
-import evaluate from "simple-evaluate";
 
 interface MenuItemProperties {
   label: string;
@@ -203,33 +201,6 @@ function ViaDropDown(props: DropdownElement) {
   );
 }
 
-function ViaColor(props: ColorElement) {
-  const handleChange = (value: string, color: MuiColorInputColors) => {
-    console.log(value);
-    props.onChange(parseInt(color.hex.slice(1), 16));
-  };
-  return (
-    <>
-      <Grid item xs={3}>
-        <h4>{props.label}</h4>
-      </Grid>
-      <Grid item xs={9}>
-        <FormControl fullWidth>
-          <MuiColorInput
-            value={{
-              r: (props.value >> 16) & 0xff,
-              g: (props.value >> 8) & 0xff,
-              b: props.value & 0xff,
-            }}
-            onChange={handleChange}
-            format="rgb"
-          ></MuiColorInput>
-        </FormControl>
-      </Grid>
-    </>
-  );
-}
-
 function ViaButton(props: ButtonElement) {
   return (
     <>
@@ -339,15 +310,6 @@ function MenuElement(props: MenuSectionProperties, elem: MenuElementProperties) 
             onChange={(value) => props.onChange(elem.content, value)}
           />
         );
-      case "color":
-        return (
-          <ViaColor
-            key={`${props.label}-${elem.label}`}
-            {...elem}
-            value={props.customValues[elem.content[0]] ?? 0}
-            onChange={(value) => props.onChange(elem.content, value)}
-          />
-        );
       case "button":
         return (
           <ViaButton
@@ -377,14 +339,7 @@ function ViaMenuItem(props: MenuSectionProperties) {
     <Grid container alignItems="center" spacing={2}>
       <Grid item xs={12}></Grid>
       {props.content.flatMap((elem) => {
-        if ("showIf" in elem) {
-          const show = evaluate(props.customValues, elem.showIf.replace(/({|})/g, ""));
-          if (show) {
-            return "label" in elem
-              ? MenuElement(props, elem)
-              : elem.content.flatMap((elem) => MenuElement(props, elem));
-          }
-        } else if ("type" in elem) {
+        if ("type" in elem) {
           return MenuElement(props, elem);
         }
       })}
