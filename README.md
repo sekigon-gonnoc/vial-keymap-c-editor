@@ -42,9 +42,14 @@ qmk_firmware/
 
 ## 使用方法
 
-* `LOGIN WITH GITHUB`ボタンを押し、GitHub Appをインストールする
-* `ADD REPOSITORY`ボタンを押し、編集したいリポジトリを選択する
+* `LOGIN WITH GITHUB`ボタンを押す
+  ![](img/login.png)  
+* （初回のみ）リポジトリを選択してGitHub Appをインストールして、ツールに戻る
+  ![](img/install.png)
 * `REPOSITORY`と`BRANCH`を選択したらキーマップが表示される
-* 編集が完了したら`COMMIT CHANGES`ボタンを押すとkeymap.cがコミットされる
+  ![](img/load.png)
+* 編集が完了したら`COMMIT CHANGES`ボタンを押して編集内容をGitHubにコミットする
 
 自動生成されるキーマップに手書きのコードを追加したい場合は、keymap.cの`/* USER INCLUDE BEGIN*/` および `/* USER CODE BEGIN */`で始まる部分に記入してください。
+
+別のリポジトリを編集したい場合は`ADD REPOSITORY`ボタンを押して、GitHubの設定画面でリポジトリを追加してください。
