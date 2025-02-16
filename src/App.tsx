@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, lazy } from "react";
 import { GitHubApp } from "./components/github/GitHubApp";
-import { KeymapEditor } from "./components/KeymapEditor"
+// import { KeymapEditor } from "./components/KeymapEditor"
 import { VialData } from "./services/VialData";
 import { changeLayerCount, generateKeymapC, parseKeymapC, QmkKeymap } from "./services/KeymapParser/keymap-c";
 import { generateRulesMk } from "./services/KeymapParser/parseRules";
@@ -9,6 +9,8 @@ import { changeTapDanceCount } from "./services/KeymapParser/tapDanceParser";
 import { changeComboCount } from "./services/KeymapParser/comboParser";
 import { changeKeyOverrideCount } from "./services/KeymapParser/keyoverrideParser";
 import { updateVialConfig } from "./services/KeymapParser/configParser";
+
+const KeymapEditor = lazy(() => import("./components/KeymapEditor"));
 
 function App() {
   const [vialJson, setVialJson] = useState<any>(undefined);

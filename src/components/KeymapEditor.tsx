@@ -177,3 +177,5 @@ export function KeymapEditor(props: {
     </>
   );
 }
+
+export default KeymapEditor;
