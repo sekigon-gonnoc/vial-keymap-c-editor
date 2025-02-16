@@ -33,6 +33,7 @@ export interface QmkKeymap {
     userCode?: string;      // ユーザー定義コード部分
     encoderEntries: EncoderEntry[][]; // エンコーダーマップ
     keyOverrideEntries: KeyOverrideEntry[]; // キーオーバーライドエントリ
+    quantumSettings: {[key: string]: number}; // Quantum設定
 }
 
 
