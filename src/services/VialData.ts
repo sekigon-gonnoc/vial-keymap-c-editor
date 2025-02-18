@@ -435,14 +435,23 @@ export class VialData implements IVialData {
   }
 
   async GetQuantumSettingsValue(
-    _id: number[]
-  ): Promise<{ [id: number]: number }> {
-    return {};
+    id: string[]
+  ): Promise<{ [id: string]: number }> {
+    return id.reduce((acc, id) => {
+      const setting = this.keymap.quantumSettings[id];
+      return { ...acc, [id]: setting ?? 0 };
+    }, {});
   }
 
-  async SetQuantumSettingsValue(_value: {
+  async SetQuantumSettingsValue(value: {
     [id: number]: number;
-  }): Promise<void> {}
+  }): Promise<void> {
+    this.keymap.quantumSettings = {
+      ...this.keymap.quantumSettings,
+      ...value,
+    };
+    console.log(this.keymap.quantumSettings);
+  }
 
   async EraseQuantumSettingsValue(): Promise<void> {}
 

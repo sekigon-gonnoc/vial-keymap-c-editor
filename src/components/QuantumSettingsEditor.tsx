@@ -16,7 +16,7 @@ export function QuantumSettingsEditor(props: {
 
     const undefinedIds = QuantumSettingDefinition[tabValue].content
       .filter((v) => quantumValue[v.content[0]] === undefined)
-      .map((v) => v.content[1] as number);
+      .map((v) => v.content[0] as string);
     const newValue = { ...quantumValue };
     undefinedIds.forEach((id) => {
       newValue[id] = 0;

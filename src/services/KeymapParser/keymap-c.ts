@@ -17,23 +17,23 @@ export interface KeymapLayer {
 }
 
 export interface QmkKeymap {
-    version: number;
-    author: string;
-    notes?: string;
-    documentation?: string;
-    keyboard: string;
-    keymap: string;
-    layout: string;
-    layers: KeymapLayer[];
-    dynamicMacroCount: number;
-    tapDanceEntries: TapDanceEntry[];
-    comboEntries: ComboEntry[];
-    macroEntries: number[];  // マクロバッファのバイト配列
-    userIncludes?: string;  // ユーザー定義インクルード部分
-    userCode?: string;      // ユーザー定義コード部分
-    encoderEntries: EncoderEntry[][]; // エンコーダーマップ
-    keyOverrideEntries: KeyOverrideEntry[]; // キーオーバーライドエントリ
-    quantumSettings: {[key: string]: number}; // Quantum設定
+  version: number;
+  author: string;
+  notes?: string;
+  documentation?: string;
+  keyboard: string;
+  keymap: string;
+  layout: string;
+  layers: KeymapLayer[];
+  dynamicMacroCount: number;
+  tapDanceEntries: TapDanceEntry[];
+  comboEntries: ComboEntry[];
+  macroEntries: number[]; // マクロバッファのバイト配列
+  userIncludes?: string; // ユーザー定義インクルード部分
+  userCode?: string; // ユーザー定義コード部分
+  encoderEntries: EncoderEntry[][]; // エンコーダーマップ
+  keyOverrideEntries: KeyOverrideEntry[]; // キーオーバーライドエントリ
+  quantumSettings: { [key: string]: number }; // Quantum設定
 }
 
 

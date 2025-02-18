@@ -143,7 +143,7 @@ function App() {
             <QuantumSettingsEditor
               via={vialData}
               onChange={(values) => {
-                vialData.keymap.quantumSettings = values;
+                vialData.SetQuantumSettingsValue(values);
               }}
             />
           </Box>

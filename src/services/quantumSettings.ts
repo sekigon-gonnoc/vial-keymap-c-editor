@@ -206,7 +206,7 @@ export async function QuantumSettingsReadAll(via: IVialData): Promise<{ [id: str
     set.content.map((setting) => setting.content),
   );
 
-  return Object.entries(await via.GetQuantumSettingsValue(ids.map((id) => id[1] as number))).reduce(
+  return Object.entries(await via.GetQuantumSettingsValue(ids.map((id) => id[0] as string))).reduce(
     (acc, v) => {
       return {
         ...acc,

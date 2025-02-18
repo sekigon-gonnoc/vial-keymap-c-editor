@@ -74,7 +74,7 @@ export interface IVialData {
     suppressedMods: number;
     options: number;
   }[]): Promise<void>;
-  GetQuantumSettingsValue(id: number[]): Promise<{ [id: number]: number }>;
+  GetQuantumSettingsValue(id: string[]): Promise<{ [id: string]: number }>;
   SetQuantumSettingsValue(value: { [id: number]: number }): Promise<void>;
   EraseQuantumSettingsValue(): Promise<void>;
   GetCustomValue(id: number[][]): Promise<number[]>;
