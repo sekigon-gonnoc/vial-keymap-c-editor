@@ -114,9 +114,6 @@ export function updateQuantumSettings(
     }
   });
 
-  console.log(newConfigH);
-  console.log(newKeyboardJson);
-
   return { configH: newConfigH, keyboardJson: newKeyboardJson };
 }
 
