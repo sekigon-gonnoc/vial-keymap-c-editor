@@ -8,7 +8,7 @@ import { DynamicEntryCount } from "./services/IVialData";
 import { changeTapDanceCount } from "./services/KeymapParser/tapDanceParser";
 import { changeComboCount } from "./services/KeymapParser/comboParser";
 import { changeKeyOverrideCount } from "./services/KeymapParser/keyoverrideParser";
-import { updateQuantumSettings, updateVialConfig } from "./services/KeymapParser/configParser";
+import { updateQuantumSettings, updateVialConfig, loadQuantumSettings } from "./services/KeymapParser/configParser";
 import { QuantumSettingsEditor } from "./components/QuantumSettingsEditor";
 
 const KeymapEditor = lazy(() => import("./components/KeymapEditor"));
@@ -88,6 +88,13 @@ function App() {
           setConfigH(configH);
           const newVialData = new VialData(newKeymapC);
           await newVialData.initKeycodeTable(vialJson.customKeycodes);
+
+          // 既存の設定を削除
+          newVialData.keymap.quantumSettings = {};
+          // 設定値の読み込みと反映
+          const settings = loadQuantumSettings(configH, keyboardJson);
+          await newVialData.SetQuantumSettingsValue(settings);
+
           setVialData(newVialData);
           setDynamicEntryCount({
             layer: newKeymapC.layers.length,

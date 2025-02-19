@@ -119,3 +119,46 @@ export function updateQuantumSettings(
 
   return { configH: newConfigH, keyboardJson: newKeyboardJson };
 }
+
+import { QuantumSettingDefinition } from "../quantumSettings";
+
+export function loadQuantumSettings(
+  configH: string,
+  keyboardJson: any
+): { [id: string]: number | undefined } {
+  const settings: { [id: string]: number | undefined } = {};
+
+  const definedSettings = new Set(
+    QuantumSettingDefinition.flatMap(section => 
+      section.content.map(item => item.content[0] as string)
+    )
+  );
+
+  // config.hから大文字の定義を読み込む（定義済みかつ値が存在する場合のみ）
+  const defineMatches = configH.matchAll(/#define\s+([A-Z][A-Z0-9_]*)\s+(\d+)/g);
+  for (const match of defineMatches) {
+    const key = match[1];
+    if (definedSettings.has(key)) {
+      const value = parseInt(match[2], 10);
+      if (!isNaN(value)) {  // 数値として有効な場合のみ設定
+        settings[key] = value;
+      }
+    }
+  }
+
+  // keyboard.jsonから階層的な設定を読み込む（定義済みかつ値が存在する場合のみ）
+  const loadNestedSettings = (obj: any, prefix: string = '') => {
+    Object.entries(obj).forEach(([key, value]) => {
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+      if (typeof value === 'object' && value !== null) {
+        loadNestedSettings(value, fullKey);
+      } else if (typeof value === 'number' && definedSettings.has(fullKey)) {
+        settings[fullKey] = value;
+      }
+    });
+  };
+
+  loadNestedSettings(keyboardJson);
+
+  return settings;
+}

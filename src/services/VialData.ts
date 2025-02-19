@@ -438,8 +438,11 @@ export class VialData implements IVialData {
     id: string[]
   ): Promise<{ [id: string]: number }> {
     return id.reduce((acc, id) => {
-      const setting = this.keymap.quantumSettings[id];
-      return { ...acc, [id]: setting };
+      // 設定が存在する場合のみ値を返す
+      if (id in this.keymap.quantumSettings) {
+        return { ...acc, [id]: this.keymap.quantumSettings[id] };
+      }
+      return acc;
     }, {});
   }
 

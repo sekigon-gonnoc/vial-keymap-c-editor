@@ -13,35 +13,33 @@ export function QuantumSettingsEditor(props: {
     [id: string]: number | undefined;
   }>({});
 
+  // 初回ロード時に全設定を読み込む
   useEffect(() => {
-    console.log("read quantum values");
-
-    const undefinedIds = QuantumSettingDefinition[tabValue].content
-      .filter((v) => quantumValue[v.content[0]] === undefined)
-      .map((v) => v.content[0] as string);
-    const newValue = { ...quantumValue };
-    props.onChange(newValue);
-    setQuantumValue(newValue);
-
+    const allIds = QuantumSettingDefinition.flatMap(menu => 
+      menu.content.map(item => item.content[0] as string)
+    );
+    
     navigator.locks.request("load-quantum-settings", async () => {
-      const value = await props.via.GetQuantumSettingsValue(undefinedIds);
-      const newValue = Object.entries(value).reduce(
-        (acc, v) => {
-          const id = QuantumSettingDefinition[tabValue].content.find((c) => {
-            return c.content[1].toString() === v[0];
-          });
+      const values = await props.via.GetQuantumSettingsValue(allIds);
+      const newValues = Object.entries(values).reduce((acc, [id, value]) => {
+        const setting = QuantumSettingDefinition
+          .flatMap(menu => menu.content)
+          .find(item => item.content[0] === id);
+        
+        if (setting) {
+          const mask = (1 << (8 * (setting.content[2] as number))) - 1;
           return {
             ...acc,
-            [id?.content[0] ?? "id-unknown"]:
-              v[1] & ((1 << (8 * ((id?.content[2] as number) ?? 2))) - 1),
+            [id]: value & mask
           };
-        },
-        { ...quantumValue }
-      );
-      setQuantumValue(newValue);
-      console.log(newValue);
+        }
+        return acc;
+      }, {});
+
+      setQuantumValue(newValues);
+      console.log('Loaded quantum settings:', newValues);
     });
-  }, [props.via, tabValue]);
+  }, [props.via]);
 
   return (
     <>
