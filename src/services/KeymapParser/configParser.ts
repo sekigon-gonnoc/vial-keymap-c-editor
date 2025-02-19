@@ -45,3 +45,77 @@ export function updateVialConfig(configContent: string, newConfig: Partial<VialC
 
   return content;
 }
+
+interface UpdateResult {
+  configH: string;
+  keyboardJson: any;
+}
+
+export function updateQuantumSettings(
+  configH: string,
+  keyboardJson: any,
+  values: { [id: string]: number | undefined }
+): UpdateResult {
+  let newConfigH = configH;
+  let newKeyboardJson = { ...keyboardJson };
+
+  Object.entries(values).forEach(([key, value]) => {
+    if (value === undefined) {
+      if (key === key.toUpperCase()) {
+        newConfigH = newConfigH.replace(new RegExp(`#define ${key}.*?\n`, 'g'), '');
+      } else {
+        // キーに.が含まれている場合は階層的に削除
+        const keyParts = key.split('.');
+        const parents: { obj: any, key: string }[] = [];
+        let current = newKeyboardJson;
+
+        // 親要素を記録しながら目的の要素まで移動
+        for (let i = 0; i < keyParts.length - 1; i++) {
+          if (current[keyParts[i]] === undefined) break;
+          parents.push({ obj: current, key: keyParts[i] });
+          current = current[keyParts[i]];
+        }
+
+        // 目的の要素を削除
+        if (current[keyParts[keyParts.length - 1]] !== undefined) {
+          delete current[keyParts[keyParts.length - 1]];
+        }
+
+        // 親要素が空になった場合、順次削除
+        for (let i = parents.length - 1; i >= 0; i--) {
+          const { obj, key } = parents[i];
+          if (Object.keys(obj[key]).length === 0) {
+            delete obj[key];
+          } else {
+            break;
+          }
+        }
+      }
+    } else {
+      if (key === key.toUpperCase()) {
+        const defineRegex = new RegExp(`#define ${key}.*?\n`, 'g');
+        const newLine = `#define ${key} ${value}\n`;
+        if (newConfigH.match(defineRegex)) {
+          newConfigH = newConfigH.replace(defineRegex, newLine);
+        } else {
+          newConfigH = newConfigH + newLine;
+        }
+      } else {
+        const keyParts = key.split('.');
+        let current = newKeyboardJson;
+        for (let i = 0; i < keyParts.length - 1; i++) {
+          if (current[keyParts[i]] === undefined) {
+            current[keyParts[i]] = {};
+          }
+          current = current[keyParts[i]];
+        }
+        current[keyParts[keyParts.length - 1]] = value;
+      }
+    }
+  });
+
+  console.log(newConfigH);
+  console.log(newKeyboardJson);
+
+  return { configH: newConfigH, keyboardJson: newKeyboardJson };
+}
