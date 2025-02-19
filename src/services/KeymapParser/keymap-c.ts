@@ -263,6 +263,7 @@ export function parseKeymapC(
     userCode,
     encoderEntries,
     keyOverrideEntries,
+    quantumSettings: {},
   };
 }
 

@@ -6,10 +6,12 @@ import { MenuSectionProperties, ViaMenuItem } from "./ViaMenuItem";
 
 export function QuantumSettingsEditor(props: {
   via: IVialData;
-  onChange: (value: { [id: string]: number }) => void;
+  onChange: (value: { [id: string]: number | undefined }) => void;
 }) {
   const [tabValue, setTabValue] = useState(0);
-  const [quantumValue, setQuantumValue] = useState<{ [id: string]: number }>({});
+  const [quantumValue, setQuantumValue] = useState<{
+    [id: string]: number | undefined;
+  }>({});
 
   useEffect(() => {
     console.log("read quantum values");
@@ -18,9 +20,6 @@ export function QuantumSettingsEditor(props: {
       .filter((v) => quantumValue[v.content[0]] === undefined)
       .map((v) => v.content[0] as string);
     const newValue = { ...quantumValue };
-    undefinedIds.forEach((id) => {
-      newValue[id] = 0;
-    });
     props.onChange(newValue);
     setQuantumValue(newValue);
 
@@ -37,7 +36,7 @@ export function QuantumSettingsEditor(props: {
               v[1] & ((1 << (8 * ((id?.content[2] as number) ?? 2))) - 1),
           };
         },
-        { ...quantumValue },
+        { ...quantumValue }
       );
       setQuantumValue(newValue);
       console.log(newValue);

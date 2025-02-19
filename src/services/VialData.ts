@@ -67,7 +67,7 @@ export class VialData implements IVialData {
     matrix_definition: { rows: number; cols: number }
   ): Promise<number[]> {
     const keymap = this._keymap.layers[layer].keys.map((key) => ({
-      keycode: this.qmkKeycodes[key.keycode] ?? DefaultQmkKeycode,
+      keycode: this.qmkKeycodes[key.key] ?? DefaultQmkKeycode,
       matrix: key.matrix,
     }));
     const result: number[] = new Array(
@@ -439,18 +439,20 @@ export class VialData implements IVialData {
   ): Promise<{ [id: string]: number }> {
     return id.reduce((acc, id) => {
       const setting = this.keymap.quantumSettings[id];
-      return { ...acc, [id]: setting ?? 0 };
+      return { ...acc, [id]: setting };
     }, {});
   }
 
   async SetQuantumSettingsValue(value: {
-    [id: number]: number;
+    [id: string]: number | undefined;
   }): Promise<void> {
-    this.keymap.quantumSettings = {
-      ...this.keymap.quantumSettings,
-      ...value,
-    };
-    console.log(this.keymap.quantumSettings);
+    Object.entries(value).forEach(([key, value]) => {
+      if (value === undefined) {
+        delete this.keymap.quantumSettings[key];
+      } else {
+        this.keymap.quantumSettings[key] = value;
+      }
+    });
   }
 
   async EraseQuantumSettingsValue(): Promise<void> {}

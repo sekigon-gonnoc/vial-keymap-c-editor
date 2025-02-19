@@ -65,6 +65,62 @@ function App() {
     }
   };
 
+  const updateQuantumSettings = (values: { [id: string]: number | undefined }) => {
+    if (!configH || !keyboardJson || !vialData) return;
+
+    let newConfigH = configH;
+    let newKeyboardJson = { ...keyboardJson };
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (value === undefined) {
+        // デフォルト値の場合は設定を削除
+        if (key === key.toUpperCase()) {
+          newConfigH = newConfigH.replace(new RegExp(`#define ${key}.*?\n`, 'g'), '');
+        } else {
+          // キーに.が含まれている場合は階層的に削除
+          const keyParts = key.split('.');
+          let current = newKeyboardJson;
+          for (let i = 0; i < keyParts.length - 1; i++) {
+            if (current[keyParts[i]] === undefined) break;
+            current = current[keyParts[i]];
+          }
+          if (current[keyParts[keyParts.length - 1]] !== undefined) {
+            delete current[keyParts[keyParts.length - 1]];
+          }
+        }
+      } else {
+        // 値がある場合は設定を追加/更新
+        if (key === key.toUpperCase()) {
+          const defineRegex = new RegExp(`#define ${key}.*?\n`, 'g');
+          const newLine = `#define ${key} ${value}\n`;
+          if (newConfigH.match(defineRegex)) {
+            newConfigH = newConfigH.replace(defineRegex, newLine);
+          } else {
+            newConfigH = newConfigH + newLine;
+          }
+        } else {
+          // キーに.が含まれている場合は階層的に追加
+          const keyParts = key.split('.');
+          let current = newKeyboardJson;
+          for (let i = 0; i < keyParts.length - 1; i++) {
+            if (current[keyParts[i]] === undefined) {
+              current[keyParts[i]] = {};
+            }
+            current = current[keyParts[i]];
+          }
+          current[keyParts[keyParts.length - 1]] = value;
+        }
+      }
+    });
+
+    console.log(newConfigH);
+    console.log(newKeyboardJson);
+
+    setConfigH(newConfigH);
+    setKeyboardJson(newKeyboardJson);
+    vialData.SetQuantumSettingsValue(values);
+  };
+
   return (
     <>
       <GitHubApp
@@ -142,9 +198,7 @@ function App() {
           <Box hidden={tabValue !== 1}>
             <QuantumSettingsEditor
               via={vialData}
-              onChange={(values) => {
-                vialData.SetQuantumSettingsValue(values);
-              }}
+              onChange={updateQuantumSettings}
             />
           </Box>
         </>

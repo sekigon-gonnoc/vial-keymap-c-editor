@@ -7,7 +7,6 @@ export const QuantumSettingDefinition: {
     label: string;
     content: (string | number)[];
     options?: (string | number)[] | (string | number)[][];
-    default?: number;
   }[];
 }[] = [
   {
@@ -28,7 +27,6 @@ export const QuantumSettingDefinition: {
           ["Swap LCTL LGUI", 8],
           ["Swap RCtl RGUI", 9],
         ],
-        default: 0,
       },
     ],
   },
@@ -45,7 +43,6 @@ export const QuantumSettingDefinition: {
           "Send Esc if GUI is pressed",
           "Send Esc if Shift is pressed",
         ],
-        default: 0,
       },
     ],
   },
@@ -57,7 +54,6 @@ export const QuantumSettingDefinition: {
         type: "range",
         label: "Tapping term [ms]",
         content: ["tapping.term", 7, 2],
-        default: 200,
       },
       {
         type: "multiple-checkbox",
@@ -69,28 +65,24 @@ export const QuantumSettingDefinition: {
           "Tapping force hold",
           "Retro tapping",
         ],
-        default: 0,
       },
       {
         type: "range",
         label: "Tap code delay [ms]",
         content: ["qmk.tap_keycode_delay", 18, 2],
         options: [0, 500],
-        default: 0,
       },
       {
         type: "range",
         label: "Tap hold Caps delay [ms]",
         content: ["qmk.tap_capslock_delay", 19, 2],
         options: [0, 500],
-        default: 80,
       },
       {
         type: "range",
         label: "Tapping toggle",
         content: ["tapping.toggle", 20, 1],
         options: [0, 99],
-        default: 5,
       },
     ],
   },
@@ -110,14 +102,12 @@ export const QuantumSettingDefinition: {
           "Enable keyrepeat",
           "Disable keyrepeat when timeout is exceeded",
         ],
-        default: 0,
       },
       {
         type: "range",
         label: "Auto Shift timeout",
         content: ["AUTO_SHIFT_TIMEOUT", 4, 1],
         options: [0, 255],
-        default: 175,
       },
     ],
   },
@@ -130,7 +120,6 @@ export const QuantumSettingDefinition: {
         label: "Combo term [ms]",
         content: ["combo.term", 2, 2],
         options: [0, 500],
-        default: 50,
       },
     ],
   },
@@ -142,14 +131,12 @@ export const QuantumSettingDefinition: {
         label: "Tap toggle count",
         content: ["oneshot.tap_toggle", 5, 1],
         options: [0, 50],
-        default: 5,
       },
       {
         type: "range",
         label: "One shot key timeout [ms]",
         content: ["oneshot.timeout", 6, 2],
         options: [0, 65535],
-        default: 5000,
       },
     ],
   },
@@ -161,7 +148,6 @@ export const QuantumSettingDefinition: {
         label: "Mouse key delay[ms]",
         content: ["mousekey.delay", 9, 2],
         options: [0, 500],
-        default: 10,
       },
       {
         type: "range",

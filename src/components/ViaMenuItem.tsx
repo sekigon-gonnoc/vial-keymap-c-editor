@@ -24,7 +24,7 @@ type ToggleElement = {
   options?: [number, number];
   content: [string, number, number, number?];
   value?: number;
-  onChange: (value: number) => void;
+  onChange: (value: number | undefined) => void;
 };
 
 type RangeElement = {
@@ -32,8 +32,8 @@ type RangeElement = {
   label: string;
   options?: [number, number];
   content: [string, number, number, number?];
-  value: number;
-  onChange: (value: number) => void;
+  value: number | undefined;
+  onChange: (value: number | undefined) => void;
 };
 
 type DropdownElement = {
@@ -42,7 +42,7 @@ type DropdownElement = {
   content: [string, number, number, number?];
   options: Array<[string, number]> | Array<string>;
   value: number;
-  onChange: (value: number) => void;
+  onChange: (value: number | undefined) => void;
 };
 
 type ColorElement = {
@@ -50,7 +50,7 @@ type ColorElement = {
   label: string;
   content: [string, number, number, number?];
   value: number;
-  onChange: (value: number) => void;
+  onChange: (value: number | undefined) => void;
 };
 
 type ButtonElement = {
@@ -59,7 +59,7 @@ type ButtonElement = {
   content: [string, number, number, number?];
   options?: Array<number>;
   value: number;
-  onChange: (value: number) => void;
+  onChange: (value: number | undefined) => void;
 };
 
 type MultipleCheckboxElement = {
@@ -68,7 +68,7 @@ type MultipleCheckboxElement = {
   content: [string, number, number, number?];
   options: Array<[string, number]> | Array<string>;
   value: number;
-  onChange: (value: number) => void;
+  onChange: (value: number | undefined) => void;
 };
 
 type ShowIfElement =
@@ -89,8 +89,11 @@ type MenuElementProperties =
 type MenuSectionProperties = {
   label: string;
   content: (MenuElementProperties | ShowIfElement)[];
-  customValues: { [id: string]: number };
-  onChange: (id: [string, number, number, number?], value: number) => void;
+  customValues: { [id: string]: number |  undefined };
+  onChange: (
+    id: [string, number, number, number?],
+    value: number | undefined
+  ) => void;
 };
 
 function ViaToggle(props: ToggleElement) {
@@ -109,31 +112,42 @@ function ViaToggle(props: ToggleElement) {
   );
 }
 function ViaRange(props: RangeElement) {
-  const crop = (val: number) => {
-    if (((props.options?.[1] ?? 255) < val && props.options?.[1]) ?? 0 < 0) {
-      return val - 256;
-    }
+  const min = props.options?.[0] ?? 0;
+  const max = props.options?.[1] ?? 255;
+  // デフォルト値は常に最小値-1
+  const defaultValue = min - 1;
 
+  const crop = (val: number | undefined) => {
+    if (val === undefined) return defaultValue;
+    if (val > max) return max;
+    if (val < defaultValue) return defaultValue;
     return val;
   };
+
   const handleChange = (_event: Event, value: number | number[]) => {
     if (!Array.isArray(value)) {
-      props.onChange(value);
+      props.onChange(value === defaultValue ? undefined : value);
     }
   };
-  const handleChangeCommitted = (_event: SyntheticEvent | Event, value: number | number[]) => {
+
+  const handleChangeCommitted = (
+    _event: SyntheticEvent | Event,
+    value: number | number[]
+  ) => {
     if (!Array.isArray(value)) {
-      props.onChange(value);
+      props.onChange(value === defaultValue ? undefined : value);
     }
   };
+
   const handleChangeInput = (event: ChangeEvent<HTMLInputElement>) => {
-    const max = props.options?.[1] ?? 255;
-    const min = props.options?.[0] ?? 0;
     const value = Math.min(
       max,
-      Math.max(min, Number(event.target.value === "" ? 0 : event.target.value)),
+      Math.max(
+        defaultValue,
+        Number(event.target.value === "" ? defaultValue : event.target.value)
+      )
     );
-    props.onChange(value);
+    props.onChange(value === defaultValue ? undefined : value);
   };
 
   return (
@@ -146,16 +160,21 @@ function ViaRange(props: RangeElement) {
           value={crop(props.value)}
           onChange={handleChange}
           onChangeCommitted={handleChangeCommitted}
-          min={props.options?.[0] ?? 0}
-          max={props.options?.[1] ?? 255}
+          min={defaultValue}
+          max={max}
           valueLabelDisplay="auto"
+          marks={[{ value: defaultValue, label: "default" }]}
         ></Slider>
       </Grid>
       <Grid item xs={1}>
         <Input
-          value={crop(props.value)}
+          value={props.value === undefined ? "default" : crop(props.value)}
           onChange={handleChangeInput}
-          inputProps={{ type: "number" }}
+          inputProps={{ 
+            type: "text",
+            inputMode: "numeric",
+            pattern: "[0-9]*"
+          }}
         ></Input>
       </Grid>
     </>
@@ -288,7 +307,7 @@ function MenuElement(props: MenuSectionProperties, elem: MenuElementProperties) 
           <ViaToggle
             key={`${props.label}-${elem.label}`}
             {...elem}
-            value={props.customValues[elem.content[0]] ?? 0}
+            value={props.customValues[elem.content[0]]}
             onChange={(value) => props.onChange(elem.content, value)}
           />
         );
@@ -297,7 +316,7 @@ function MenuElement(props: MenuSectionProperties, elem: MenuElementProperties) 
           <ViaRange
             key={`${props.label}-${elem.label}`}
             {...elem}
-            value={props.customValues[elem.content[0]] ?? 0}
+            value={props.customValues[elem.content[0]]}
             onChange={(value) => props.onChange(elem.content, value)}
           />
         );
