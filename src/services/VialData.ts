@@ -67,7 +67,7 @@ export class VialData implements IVialData {
     matrix_definition: { rows: number; cols: number }
   ): Promise<number[]> {
     const keymap = this._keymap.layers[layer].keys.map((key) => ({
-      keycode: this.qmkKeycodes[key.key] ?? DefaultQmkKeycode,
+      keycode: this.qmkKeycodes[key.keycode] ?? DefaultQmkKeycode,
       matrix: key.matrix,
     }));
     const result: number[] = new Array(
