@@ -194,7 +194,7 @@ export const QuantumSettingDefinition: {
       {
         type: "range",
         label: "Mouse key wheel time to max[ms]",
-        content: ["MOUSE_KEY_WHEL_TIME_TO_MAX", 17, 2],
+        content: ["MOUSEKEY_WHEEL_TIME_TO_MAX", 17, 2],
         options: [0, 500],
       },
     ],
