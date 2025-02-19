@@ -7,6 +7,7 @@ export const QuantumSettingDefinition: {
     label: string;
     content: (string | number)[];
     options?: (string | number)[] | (string | number)[][];
+    default?: number;
   }[];
 }[] = [
   {
@@ -15,7 +16,7 @@ export const QuantumSettingDefinition: {
       {
         type: "multiple-checkbox",
         label: "Magic",
-        content: ["id-magic", 21, 2],
+        content: ["DEFAULT_KEYMAP_EECONFIG", 21, 2],
         options: [
           ["Swap Control CapsLock", 0],
           ["CapsLock to Control", 1],
@@ -27,6 +28,7 @@ export const QuantumSettingDefinition: {
           ["Swap LCTL LGUI", 8],
           ["Swap RCtl RGUI", 9],
         ],
+        default: 0,
       },
     ],
   },
@@ -36,13 +38,14 @@ export const QuantumSettingDefinition: {
       {
         type: "multiple-checkbox",
         label: "Grave Escape Override",
-        content: ["id-grave-escape", 1, 1],
+        content: ["DEFAULT_GRAV_ESC_EECONFIG", 1, 1],
         options: [
           "Send Esc if Alt is pressed",
           "Send Esc if Ctrl is pressed",
           "Send Esc if GUI is pressed",
           "Send Esc if Shift is pressed",
         ],
+        default: 0,
       },
     ],
   },
@@ -53,36 +56,41 @@ export const QuantumSettingDefinition: {
       {
         type: "range",
         label: "Tapping term [ms]",
-        content: ["id-tapping-term", 7, 2],
+        content: ["tapping.term", 7, 2],
+        default: 200,
       },
       {
         type: "multiple-checkbox",
         label: "Tapping options",
-        content: ["id-tapping", 8, 1],
+        content: ["VIAL_DEFAULT_TAPPING", 8, 1],
         options: [
           "Permissive hold",
           "Ignore Mod Tap interrupt",
           "Tapping force hold",
           "Retro tapping",
         ],
+        default: 0,
       },
       {
         type: "range",
         label: "Tap code delay [ms]",
-        content: ["id-tap-code-delay", 18, 2],
+        content: ["qmk.tap_keycode_delay", 18, 2],
         options: [0, 500],
+        default: 0,
       },
       {
         type: "range",
         label: "Tap hold Caps delay [ms]",
-        content: ["id-tap-hold-caps-delay", 19, 2],
+        content: ["qmk.tap_capslock_delay", 19, 2],
         options: [0, 500],
+        default: 80,
       },
       {
         type: "range",
         label: "Tapping toggle",
-        content: ["id-tapping-toggle", 20, 1],
+        content: ["tapping.toggle", 20, 1],
         options: [0, 99],
+        default: 5,
       },
     ],
   },
@@ -92,7 +100,7 @@ export const QuantumSettingDefinition: {
       {
         type: "multiple-checkbox",
         label: "Auto Shift option",
-        content: ["id-auto-shift", 3, 1],
+        content: ["VIAL_DEFAULT_AUTO_SHIFT", 3, 1],
         options: [
           "Enable",
           "Enable for modifiers",
@@ -102,12 +110,14 @@ export const QuantumSettingDefinition: {
           "Enable keyrepeat",
           "Disable keyrepeat when timeout is exceeded",
         ],
+        default: 0,
       },
       {
         type: "range",
         label: "Auto Shift timeout",
-        content: ["id-auto-shift-timeout", 4, 1],
+        content: ["AUTO_SHIFT_TIMEOUT", 4, 1],
         options: [0, 255],
+        default: 175,
       },
     ],
   },
@@ -118,8 +128,9 @@ export const QuantumSettingDefinition: {
       {
         type: "range",
         label: "Combo term [ms]",
-        content: ["id-combo-term", 2, 2],
+        content: ["combo.term", 2, 2],
         options: [0, 500],
+        default: 50,
       },
     ],
   },
@@ -129,14 +140,16 @@ export const QuantumSettingDefinition: {
       {
         type: "range",
         label: "Tap toggle count",
-        content: ["id-osk-tap-toggle", 5, 1],
+        content: ["oneshot.tap_toggle", 5, 1],
         options: [0, 50],
+        default: 5,
       },
       {
         type: "range",
         label: "One shot key timeout [ms]",
-        content: ["id-osk-tap-timeout", 6, 2],
+        content: ["oneshot.timeout", 6, 2],
         options: [0, 65535],
+        default: 5000,
       },
     ],
   },
@@ -146,74 +159,79 @@ export const QuantumSettingDefinition: {
       {
         type: "range",
         label: "Mouse key delay[ms]",
-        content: ["id-mousekey-delay", 9, 2],
+        content: ["mousekey.delay", 9, 2],
         options: [0, 500],
+        default: 10,
       },
       {
         type: "range",
         label: "Mouse key interval[ms]",
-        content: ["id-mousekey-interval", 10, 2],
+        content: ["mousekey.interval", 10, 2],
         options: [0, 500],
       },
       {
         type: "range",
         label: "Mouse key move delta",
-        content: ["id-mousekey-move-delta", 11, 2],
+        content: ["MOUSEKEY_MOVE_DELTA", 11, 2],
         options: [0, 500],
       },
       {
         type: "range",
         label: "Mouse key max speed",
-        content: ["id-mousekey-max-speed", 12, 2],
+        content: ["mousekey.max_speed", 12, 2],
         options: [0, 500],
       },
       {
         type: "range",
         label: "Mouse key time to max[ms]",
-        content: ["id-mousekey-time-to-max", 13, 2],
+        content: ["mousekey.time_to_max", 13, 2],
         options: [0, 500],
       },
       {
         type: "range",
         label: "Mouse key wheel delay[ms]",
-        content: ["id-mousekey-wheel-delay", 14, 2],
+        content: ["mousekey.wheel_delay", 14, 2],
         options: [0, 500],
       },
       {
         type: "range",
         label: "Mouse key wheel interval[ms]",
-        content: ["id-mousekey-wheel-interval", 15, 2],
+        content: ["MOUSEKEY_WHEEL_INTERVAL", 15, 2],
         options: [0, 500],
       },
       {
         type: "range",
         label: "Mouse key wheel max speed",
-        content: ["id-mousekey-wheel-max-speed", 16, 2],
+        content: ["MOUSEKEY_WHEEL_MAX_SPEED", 16, 2],
         options: [0, 500],
       },
       {
         type: "range",
         label: "Mouse key wheel time to max[ms]",
-        content: ["id-mousekey-wheel-time-to-max", 17, 2],
+        content: ["MOUSE_KEY_WHEL_TIME_TO_MAX", 17, 2],
         options: [0, 500],
       },
     ],
   },
 ];
 
-export async function QuantumSettingsReadAll(via: IVialData): Promise<{ [id: string]: number }> {
+export async function QuantumSettingsReadAll(
+  via: IVialData
+): Promise<{ [id: string]: number }> {
   const ids = QuantumSettingDefinition.flatMap((set) =>
-    set.content.map((setting) => setting.content),
+    set.content.map((setting) => setting.content)
   );
 
-  return Object.entries(await via.GetQuantumSettingsValue(ids.map((id) => id[0] as string))).reduce(
-    (acc, v) => {
-      return {
-        ...acc,
-        [v[0]]:
-          v[1] & ((1 << ((ids.find((k) => k[1].toString() === v[0])?.[2] as number) * 8)) - 1),
-      };
-    },
-    {} as { [id: string]: number },
-  );
+  return Object.entries(
+    await via.GetQuantumSettingsValue(ids.map((id) => id[0] as string))
+  ).reduce((acc, v) => {
+    return {
+      ...acc,
+      [v[0]]:
+        v[1] &
+        ((1 <<
+          ((ids.find((k) => k[1].toString() === v[0])?.[2] as number) * 8)) -
+          1),
+    };
+  }, {} as { [id: string]: number });
 }
