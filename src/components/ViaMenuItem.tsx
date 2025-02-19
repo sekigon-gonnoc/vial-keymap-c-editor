@@ -246,14 +246,14 @@ function ViaMultipleCheckbox(props: MultipleCheckboxElement) {
     const {
       target: { value },
     } = event;
-    props.onChange(
+    const newValue =
       typeof value === "string"
-        ? (labels.find((v) => v[0] === value)?.[1] ?? 0)
+        ? labels.find((v) => v[0] === value)?.[1] ?? 0
         : (value as string[]).reduce(
             (p, c) => p ^ (1 << (labels.find((v) => v[0] === c)?.[1] ?? 0)),
-            0,
-          ),
-    );
+            0
+          );
+    props.onChange(newValue === 0 ? undefined : newValue);
   };
 
   const valueToLabel = (value: string[]) => {
