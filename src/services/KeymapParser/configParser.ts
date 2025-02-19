@@ -45,3 +45,117 @@ export function updateVialConfig(configContent: string, newConfig: Partial<VialC
 
   return content;
 }
+
+interface UpdateResult {
+  configH: string;
+  keyboardJson: any;
+}
+
+export function updateQuantumSettings(
+  configH: string,
+  keyboardJson: any,
+  values: { [id: string]: number | undefined }
+): UpdateResult {
+  let newConfigH = configH;
+  let newKeyboardJson = { ...keyboardJson };
+
+  Object.entries(values).forEach(([key, value]) => {
+    if (value === undefined) {
+      if (key === key.toUpperCase()) {
+        newConfigH = newConfigH.replace(new RegExp(`#define ${key}.*?\n`, 'g'), '');
+      } else {
+        // キーに.が含まれている場合は階層的に削除
+        const keyParts = key.split('.');
+        const parents: { obj: any, key: string }[] = [];
+        let current = newKeyboardJson;
+
+        // 親要素を記録しながら目的の要素まで移動
+        for (let i = 0; i < keyParts.length - 1; i++) {
+          if (current[keyParts[i]] === undefined) break;
+          parents.push({ obj: current, key: keyParts[i] });
+          current = current[keyParts[i]];
+        }
+
+        // 目的の要素を削除
+        if (current[keyParts[keyParts.length - 1]] !== undefined) {
+          delete current[keyParts[keyParts.length - 1]];
+        }
+
+        // 親要素が空になった場合、順次削除
+        for (let i = parents.length - 1; i >= 0; i--) {
+          const { obj, key } = parents[i];
+          if (Object.keys(obj[key]).length === 0) {
+            delete obj[key];
+          } else {
+            break;
+          }
+        }
+      }
+    } else {
+      if (key === key.toUpperCase()) {
+        const defineRegex = new RegExp(`#define ${key}.*?\n`, 'g');
+        const newLine = `#define ${key} ${value}\n`;
+        if (newConfigH.match(defineRegex)) {
+          newConfigH = newConfigH.replace(defineRegex, newLine);
+        } else {
+          newConfigH = newConfigH + newLine;
+        }
+      } else {
+        const keyParts = key.split('.');
+        let current = newKeyboardJson;
+        for (let i = 0; i < keyParts.length - 1; i++) {
+          if (current[keyParts[i]] === undefined) {
+            current[keyParts[i]] = {};
+          }
+          current = current[keyParts[i]];
+        }
+        current[keyParts[keyParts.length - 1]] = value;
+      }
+    }
+  });
+
+  return { configH: newConfigH, keyboardJson: newKeyboardJson };
+}
+
+import { QuantumSettingDefinition } from "../quantumSettings";
+
+export function loadQuantumSettings(
+  configH: string,
+  keyboardJson: any
+): { [id: string]: number | undefined } {
+  const settings: { [id: string]: number | undefined } = {};
+
+  const definedSettings = new Set(
+    QuantumSettingDefinition.flatMap(section => 
+      section.content.map(item => item.content[0] as string)
+    )
+  );
+
+  // config.hから大文字の定義を読み込む（定義済みかつ値が存在する場合のみ）
+  const defineMatches = configH.matchAll(/#define\s+([A-Z][A-Z0-9_]*)\s+(\d+)/g);
+  for (const match of defineMatches) {
+    const key = match[1];
+    if (definedSettings.has(key)) {
+      const value = parseInt(match[2], 10);
+      if (!isNaN(value)) {  // 数値として有効な場合のみ設定
+        settings[key] = value;
+      }
+    }
+  }
+
+  // keyboard.jsonから階層的な設定を読み込む（定義済みかつ値が存在する場合のみ）
+  const loadNestedSettings = (obj: any, prefix: string = '') => {
+    Object.entries(obj).forEach(([key, value]) => {
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+      if (typeof value === 'object' && value !== null) {
+        loadNestedSettings(value, fullKey);
+      } else if (typeof value === 'number' && definedSettings.has(fullKey)) {
+        settings[fullKey] = value;
+      }
+    });
+  };
+
+  loadNestedSettings(keyboardJson);
+
+  return settings;
+}

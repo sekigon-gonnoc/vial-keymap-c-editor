@@ -1,6 +1,6 @@
 import { useState, lazy } from "react";
 import { GitHubApp } from "./components/github/GitHubApp";
-// import { KeymapEditor } from "./components/KeymapEditor"
+import { Box, Tab, Tabs } from "@mui/material";
 import { VialData } from "./services/VialData";
 import { changeLayerCount, generateKeymapC, parseKeymapC, QmkKeymap } from "./services/KeymapParser/keymap-c";
 import { generateRulesMk } from "./services/KeymapParser/parseRules";
@@ -8,7 +8,8 @@ import { DynamicEntryCount } from "./services/IVialData";
 import { changeTapDanceCount } from "./services/KeymapParser/tapDanceParser";
 import { changeComboCount } from "./services/KeymapParser/comboParser";
 import { changeKeyOverrideCount } from "./services/KeymapParser/keyoverrideParser";
-import { updateVialConfig } from "./services/KeymapParser/configParser";
+import { updateQuantumSettings, updateVialConfig, loadQuantumSettings } from "./services/KeymapParser/configParser";
+import { QuantumSettingsEditor } from "./components/QuantumSettingsEditor";
 
 const KeymapEditor = lazy(() => import("./components/KeymapEditor"));
 
@@ -26,6 +27,7 @@ function App() {
     combo: number;
     override: number;
   }>();
+  const [tabValue, setTabValue] = useState(0);
 
   const updateDynamicEntryCount = (count: DynamicEntryCount) => {
     if (vialData && configH) {
@@ -63,6 +65,17 @@ function App() {
     }
   };
 
+  const handleUpdateQuantumSettings = (values: { [id: string]: number | undefined }) => {
+    if (!configH || !keyboardJson || !vialData) return;
+
+    const { configH: newConfigH, keyboardJson: newKeyboardJson } = 
+      updateQuantumSettings(configH, keyboardJson, values);
+
+    setConfigH(newConfigH);
+    setKeyboardJson(newKeyboardJson);
+    vialData.SetQuantumSettingsValue(values);
+  };
+
   return (
     <>
       <GitHubApp
@@ -75,6 +88,13 @@ function App() {
           setConfigH(configH);
           const newVialData = new VialData(newKeymapC);
           await newVialData.initKeycodeTable(vialJson.customKeycodes);
+
+          // 既存の設定を削除
+          newVialData.keymap.quantumSettings = {};
+          // 設定値の読み込みと反映
+          const settings = loadQuantumSettings(configH, keyboardJson);
+          await newVialData.SetQuantumSettingsValue(settings);
+
           setVialData(newVialData);
           setDynamicEntryCount({
             layer: newKeymapC.layers.length,
@@ -123,12 +143,26 @@ function App() {
       {vialJson && keyboardJson && keymapC && vialData && configH && dynamicEntryCount && (
         <>
           <div style={{ height: "16px" }} />
-          <KeymapEditor
-            keymap={vialJson}
-            via={vialData}
-            dynamicEntryCount={dynamicEntryCount}
-            onDynamicEntryCountChange={updateDynamicEntryCount}
-          />
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={tabValue} onChange={(_e, v) => setTabValue(v)}>
+              <Tab label="Keymap" />
+              <Tab label="Quantum Settings" />
+            </Tabs>
+          </Box>
+          <Box hidden={tabValue !== 0}>
+            <KeymapEditor
+              keymap={vialJson}
+              via={vialData}
+              dynamicEntryCount={dynamicEntryCount}
+              onDynamicEntryCountChange={updateDynamicEntryCount}
+            />
+          </Box>
+          <Box hidden={tabValue !== 1}>
+            <QuantumSettingsEditor
+              via={vialData}
+              onChange={handleUpdateQuantumSettings}
+            />
+          </Box>
         </>
       )}
     </>
