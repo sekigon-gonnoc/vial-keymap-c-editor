@@ -36,7 +36,7 @@ export const QuantumSettingDefinition: {
       {
         type: "multiple-checkbox",
         label: "Grave Escape Override",
-        content: ["DEFAULT_GRAV_ESC_EECONFIG", 1, 1],
+        content: ["DEFAULT_GRAVE_ESC_OVERRIDE", 1, 1],
         options: [
           "Send Esc if Alt is pressed",
           "Send Esc if Ctrl is pressed",

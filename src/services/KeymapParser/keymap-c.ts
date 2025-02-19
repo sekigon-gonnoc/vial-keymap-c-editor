@@ -386,6 +386,34 @@ void __wrap_dynamic_keymap_reset(void) {
         dynamic_keymap_set_key_override(i, &default_key_override_entries[i]);
     }
 #endif
+#ifdef QMK_SETTINGS
+    qmk_settings_t qs;
+    uint8_t* p_qs = &qs;
+    for (size_t i = 0; i < sizeof(qs); ++i) {
+        p_qs[i] = dynamic_keymap_get_qmk_settings(i);
+    }
+    #ifdef VIAL_DEFAULT_TAPPING
+        qs.tapping = VIAL_DEFAULT_TAPPING;
+    #endif
+    #ifdef VIAL_DEFAULT_AUTO_SHIFT
+        qs.auto_shift = VIAL_DEFAULT_AUTO_SHIFT;
+    #endif
+    #ifdef DEFAULT_GRAVE_ESC_OVERRIDE
+        qs.grave_esc_override = DEFAULT_GRAVE_ESC_OVERRIDE;
+    #endif
+
+    for (size_t i = 0; i < sizeof(qs); ++i) {
+        dynamic_keymap_set_qmk_settings(i, p_qs[i]);
+    }
+
+    #ifdef DEFAULT_KEYMAP_EECONFIG
+        keymap_config.raw = DEFAULT_KEYMAP_EECONFIG;
+        eeconfig_update_keymap(keymap_config.raw);
+    #endif
+
+    qmk_settings_init();
+#endif 
+
     uint16_t const macro_buffer_size = MIN(sizeof(default_macro_buffer), dynamic_keymap_macro_get_buffer_size());
     dynamic_keymap_macro_set_buffer(0, macro_buffer_size, (uint8_t *)default_macro_buffer);
 }
