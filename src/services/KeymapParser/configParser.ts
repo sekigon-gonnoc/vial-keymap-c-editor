@@ -94,7 +94,7 @@ export function updateQuantumSettings(
     } else {
       if (key === key.toUpperCase()) {
         const defineRegex = new RegExp(`#define ${key}.*?\n`, 'g');
-        const newLine = `#define ${key} ${value}\n`;
+        const newLine = `\n#define ${key} ${value}`;
         if (newConfigH.match(defineRegex)) {
           newConfigH = newConfigH.replace(defineRegex, newLine);
         } else {
