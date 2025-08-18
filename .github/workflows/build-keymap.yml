@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: vial-kb/vial-qmk
-          ref: 5c633c13a2cccbe0d295bdc6b38484ffa1b55527
+          ref: 0f70080d790c0c802729e2c9fbbe67596ba37aac
           path: vial-qmk
 
       - name: Replace keyboards directory
