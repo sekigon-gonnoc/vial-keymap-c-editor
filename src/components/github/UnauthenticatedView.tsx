@@ -3,6 +3,7 @@ import { useState } from "react";
 import * as Hjson from "hjson";
 import { RequiredFiles, TreeResponse } from "./types";
 import { FileStatusItem } from "./FileStatusItem";
+import { buildGitHubApiUrl } from "./api";
 
 interface UnauthenticatedViewProps {
   onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string, rulesMk: string) => void;
@@ -105,7 +106,7 @@ export function UnauthenticatedView({ onloaded, oncommit }: UnauthenticatedViewP
                 <Stack direction="row" spacing={2}>
                     <Button 
                         variant="contained"
-                        onClick={() => window.location.href = `${import.meta.env.VITE_BACKEND_URL}/github`}
+                        onClick={() => window.location.href = buildGitHubApiUrl('/github')}
                     >
                         Login with GitHub
                     </Button>

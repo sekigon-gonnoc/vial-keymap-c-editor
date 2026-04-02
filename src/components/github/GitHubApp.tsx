@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AuthenticatedView } from "./AuthenticatedView";
 import { UnauthenticatedView } from "./UnauthenticatedView";
+import { buildGitHubApiUrl } from "./api";
 
 interface GitHubAppProps {
     onloaded: (vialJson: any, keyboardJson: any, keymapC: string, configH: string, rulesMk: string) => void;
@@ -12,7 +13,7 @@ export function GitHubApp(props: GitHubAppProps) {
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/github/avatar`, { credentials: 'include' })
+        fetch(buildGitHubApiUrl('/github/avatar'), { credentials: 'same-origin' })
             .then(res => res.json())
             .then((data: {error?: string; avatar_url?: string}) => {
                 if (data.error) {
@@ -28,7 +29,7 @@ export function GitHubApp(props: GitHubAppProps) {
 
     const handleLogout = () => {
         props.onunloaded();
-        fetch(`${import.meta.env.VITE_BACKEND_URL}/github/logout`, { credentials: 'include' })
+        fetch(buildGitHubApiUrl('/github/logout'), { credentials: 'same-origin' })
             .then(() => {
                 setAvatarUrl(null);
             })

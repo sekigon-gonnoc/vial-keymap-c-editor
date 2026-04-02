@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import * as Hjson from "hjson";
 import { RequiredFiles, Repository, Branch, TreeResponse, FileUpdate, CommitResponse } from "./types";
 import { FileStatusItem } from "./FileStatusItem";
+import { buildGitHubApiUrl } from "./api";
 
 interface AuthenticatedViewProps {
   avatarUrl: string;
@@ -58,10 +59,8 @@ export function AuthenticatedView({
         .map((segment) => encodeURIComponent(segment))
         .join("%2F");
       const response = await fetch(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/github/repos/${owner}/${repo}/${branch}/${encodedPath}`,
-        { credentials: "include" }
+        buildGitHubApiUrl(`/github/repos/${owner}/${repo}/${branch}/${encodedPath}`),
+        { credentials: "same-origin" }
       );
       const jsonData = await response.json();
       const decodedContent = atob(jsonData.content);
@@ -85,10 +84,8 @@ export function AuthenticatedView({
         .map((segment) => encodeURIComponent(segment))
         .join("%2F");
       const response = await fetch(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/github/repos/${owner}/${repo}/${branch}/${encodedPath}`,
-        { credentials: "include" }
+        buildGitHubApiUrl(`/github/repos/${owner}/${repo}/${branch}/${encodedPath}`),
+        { credentials: "same-origin" }
       );
       const data = await response.json();
       return atob(data.content);
@@ -99,8 +96,8 @@ export function AuthenticatedView({
   };
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/github/repos`, {
-      credentials: "include",
+    fetch(buildGitHubApiUrl('/github/repos'), {
+      credentials: "same-origin",
     })
       .then((res) => res.json())
       .then((data: { repositories: Repository[] }) => {
@@ -123,10 +120,8 @@ export function AuthenticatedView({
     try {
       const [owner, repo] = repoFullName.split("/");
       const response = await fetch(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/github/repos/${owner}/${repo}/branches`,
-        { credentials: "include" }
+        buildGitHubApiUrl(`/github/repos/${owner}/${repo}/branches`),
+        { credentials: "same-origin" }
       );
       const branchList: Branch[] = await response.json();
       setBranches(branchList);
@@ -141,10 +136,8 @@ export function AuthenticatedView({
     try {
       const [owner, repo] = selectedRepo.split("/");
       const response = await fetch(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/github/repos/${owner}/${repo}/${branch}`,
-        { credentials: "include" }
+        buildGitHubApiUrl(`/github/repos/${owner}/${repo}/${branch}`),
+        { credentials: "same-origin" }
       );
       const treeData: TreeResponse = await response.json();
 
@@ -272,10 +265,10 @@ export function AuthenticatedView({
       });
 
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/github/repos/${owner}/${repo}/${selectedBranch}`,
+        buildGitHubApiUrl(`/github/repos/${owner}/${repo}/${selectedBranch}`),
         {
           method: 'POST',
-          credentials: 'include',
+          credentials: 'same-origin',
           body: formData
         }
       );
